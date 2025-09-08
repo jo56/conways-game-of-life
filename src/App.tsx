@@ -237,8 +237,8 @@ useEffect(() => {
 
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
-      // Track mouse position globally
       mousePos.current = { x: e.clientX, y: e.clientY };
+      //console.log('Mouse position updated:', mousePos.current); 
       
       if (isDragging.current)
         setPanelPos({ x: e.clientX - dragOffset.current.x, y: e.clientY - dragOffset.current.y });
@@ -248,17 +248,31 @@ useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Shift') {
         e.preventDefault();
-        // Teleport panel to mouse position with bounds checking
-        const panelWidth = 430; // maxWidth from panel style
-        const panelHeight = 600; // estimated height
-        const viewportWidth = window.innerWidth;
-        const viewportHeight = window.innerHeight;
         
-        // Ensure panel stays within viewport bounds
-        const x = Math.min(Math.max(0, mousePos.current.x - panelWidth / 2), viewportWidth - panelWidth);
-        const y = Math.min(Math.max(0, mousePos.current.y - 50), viewportHeight - panelHeight);
+        console.log('Shift pressed! Current state:', {
+          isMobile,
+          mousePos: mousePos.current,
+          currentPanelPos: panelPos
+        });
         
-        setPanelPos({ x, y });
+        setIsMobile(false);
+        
+        const mouseX = mousePos.current.x || window.innerWidth / 2;
+        const mouseY = mousePos.current.y || window.innerHeight / 2;
+        
+        // Simple positioning - just put it at mouse location with small offset
+        const newX = Math.max(10, Math.min(mouseX - 200, window.innerWidth - 440));
+        const newY = Math.max(10, Math.min(mouseY - 50, window.innerHeight - 400));
+        
+        console.log('Setting new panel position:', { newX, newY });
+        
+        // Force the panel position update
+        setPanelPos({ x: newX, y: newY });
+        
+        // Also force a re-render by updating a dummy state if needed
+        setTimeout(() => {
+          console.log('Panel position after update:', panelPos);
+        }, 100);
       }
     };
     
@@ -271,7 +285,7 @@ useEffect(() => {
       window.removeEventListener('mouseup', handleMouseUp);
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, []);
+  }, [isMobile, panelPos]); // Add dependencies
 
   const handleRowsChange = (newRows: number) => {
     setRows(newRows);
@@ -337,7 +351,7 @@ useEffect(() => {
       <div
         ref={panelRef}
         style={{
-          position: isMobile ? 'relative' : 'absolute',
+          position: isMobile ? 'relative' : 'fixed',
           top: isMobile ? undefined : panelPos.y,
           left: isMobile ? undefined : panelPos.x,
           marginTop: isMobile ? '10px' : undefined,
