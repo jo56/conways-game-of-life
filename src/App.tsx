@@ -251,123 +251,71 @@ export default function App(): JSX.Element {
         {/* Header */}
         <div
           onMouseDown={handleHeaderMouseDown}
-          style={{ textAlign: 'center', marginBottom: '10px', fontWeight: 'bold', cursor: 'move', userSelect: 'none', padding: '4px 0', background: 'rgba(55,65,81,0.8)', borderRadius: '6px' }}
+          style={{ textAlign: 'center', marginBottom: '10px', fontWeight: 'bold', cursor: 'move', userSelect: 'none', padding: '4px 0', background: 'rgba(55,65,81,0.8)', borderRadius: '6px', fontSize: '1rem' }}
         >Conway's Game of Life</div>
-
+        {/* Buttons */}
         {/* Buttons */}
 <div style={{ display: 'flex', gap: '6px', marginBottom: '10px', flexWrap: 'nowrap' }}>
-  <button
-    onClick={toggleRunning}
-    style={{
-      width: '60px',
-      padding: '6px',
-      borderRadius: '6px',
-      background: running ? '#06b6d4' : '#374151',
-      color: '#fff',
-      border: 'none',
-      cursor: 'pointer'
-    }}
-  >
-    {running ? 'Stop' : 'Start'}
-  </button>
-
-  <button
-    onClick={stepOnce}
-    style={{
-      width: '60px',
-      padding: '6px',
-      borderRadius: '6px',
-      background: '#374151',
-      color: '#fff',
-      border: 'none',
-      cursor: 'pointer'
-    }}
-  >
-    Step
-  </button>
-
-  <button
-    onClick={randomize}
-    style={{
-      width: '80px',
-      padding: '6px',
-      borderRadius: '6px',
-      background: '#374151',
-      color: '#fff',
-      border: 'none',
-      cursor: 'pointer'
-    }}
-  >
-    Randomize
-  </button>
-
-  <button
-    onClick={clear}
-    style={{
-      width: '60px',
-      padding: '6px',
-      borderRadius: '6px',
-      background: '#374151',
-      color: '#fff',
-      border: 'none',
-      cursor: 'pointer'
-    }}
-  >
-    Clear
-  </button>
-
-  <button
-    onClick={() => setShowAdvanced(prev => !prev)}
-    style={{
-      width: '80px',
-      padding: '6px',
-      borderRadius: '6px',
-      background: '#374151',
-      color: '#fff',
-      border: 'none',
-      cursor: 'pointer'
-    }}
-  >
-    Advanced
-  </button>
+  {[
+    { label: running ? 'Stop' : 'Start', onClick: toggleRunning, width: 60, bg: running ? '#06b6d4' : '#374151' },
+    { label: 'Step', onClick: stepOnce, width: 60, bg: '#374151' },
+    { label: 'Randomize', onClick: randomize, width: 80, bg: '#374151' },
+    { label: 'Clear', onClick: clear, width: 60, bg: '#374151' },
+    { label: 'Advanced', onClick: () => setShowAdvanced(prev => !prev), width: 80, bg: '#374151' },
+  ].map(({ label, onClick, width, bg }) => (
+    <button
+      key={label}
+      onClick={onClick}
+      style={{
+        width: `${width}px`,
+        padding: '6px',
+        borderRadius: '6px',
+        background: bg,
+        color: '#fff',
+        border: 'none',
+        cursor: 'pointer',
+        fontWeight: 'normal',  // NOT bold now
+        fontSize: '0.95rem',
+      }}
+    >
+      {label}
+    </button>
+  ))}
 </div>
-
 
         {/* Sliders */}
         {[
-  ['Speed', speed, 0, 5, setSpeed, ' gen/s'],
-  ['Cell size', cellSize, 6, 40, setCellSize, ' px'],
-  ['Rows', rows, 5, 300, handleRowsChange, ''],
-  ['Cols', cols, 5, 300, handleColsChange, '']
-].map(([label, value, min, max, setter, unit], idx) => (
-  <div key={idx} style={{ display: 'flex', alignItems: 'center', marginBottom: '8px' }}>
-    <label style={{ width: '90px', fontWeight: 500 }}>{label}:</label>
+          ['Speed', speed, 0, 5, setSpeed, ' gen/s'],
+          ['Cell size', cellSize, 6, 40, setCellSize, ' px'],
+          ['Rows', rows, 5, 300, handleRowsChange, ''],
+          ['Cols', cols, 5, 300, handleColsChange, '']
+        ].map(([label, value, min, max, setter, unit], idx) => (
+          <div key={idx} style={{ display: 'flex', alignItems: 'center', marginBottom: '8px', fontWeight: 600 }}>
+            <label style={{ width: '90px', fontWeight: 600 }}>{label}:</label>
 
-    {/* Slider container */}
-    <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: '6px' }}>
-      <input
-        type="range"
-        min={min as number}
-        max={max as number}
-        step={label === 'Speed' ? 0.25 : 1}
-        value={value as number}
-        onChange={(e) => setter(Number(e.target.value))}
-        style={{ flex: 1, height: '6px', borderRadius: '4px' }}
-      />
-      <span style={{ minWidth: '50px', textAlign: 'right', fontSize: '0.85rem' }}>
-        {`${value}${unit}`}
-      </span>
-    </div>
-  </div>
-))}
-
+            <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <input
+                type="range"
+                min={min as number}
+                max={max as number}
+                step={label === 'Speed' ? 0.25 : 1}
+                value={value as number}
+                onChange={(e) => setter(Number(e.target.value))}
+                style={{ flex: 1, height: '8px', borderRadius: '4px' }}
+              />
+              <span style={{ minWidth: '50px', textAlign: 'right', fontSize: '0.95rem' }}>
+                {`${value}${unit}`}
+              </span>
+            </div>
+          </div>
+        ))}
 
         {/* Advanced settings */}
         {showAdvanced && (
           <>
             {/* Fill prob slider */}
-            <div style={{ display: 'flex', alignItems: 'center', marginBottom: '8px' }}>
-              <label style={{ width: '90px', fontWeight: 500 }}>Fill prob:</label>
+            <div style={{ display: 'flex', alignItems: 'center', marginBottom: '8px', fontWeight: 600 }}>
+              <label style={{ width: '90px' }}>Fill prob:</label>
               <input
                 type="range"
                 min={0}
@@ -375,13 +323,13 @@ export default function App(): JSX.Element {
                 step={0.01}
                 value={fillProb}
                 onChange={(e) => setFillProb(Number(e.target.value))}
-                style={{ flex: 1, marginRight: '6px', height: '6px', borderRadius: '4px' }}
+                style={{ flex: 1, marginRight: '6px', height: '8px', borderRadius: '4px' }}
               />
-              <div style={{ width: '40px', textAlign: 'right' }}>{`${Math.round(fillProb * 100)}%`}</div>
+              <div style={{ width: '40px', textAlign: 'right', fontSize: '0.95rem' }}>{`${Math.round(fillProb * 100)}%`}</div>
             </div>
 
             {/* Color pickers */}
-            <div style={{ marginBottom: '8px', display: 'flex', justifyContent: 'space-between' }}>
+            <div style={{ marginBottom: '8px', display: 'flex', justifyContent: 'space-between', fontWeight: 600 }}>
               <label>Alive:</label>
               <input type="color" value={aliveColor} onChange={(e) => setAliveColor(e.target.value)} />
               <label>Dead:</label>
@@ -389,14 +337,14 @@ export default function App(): JSX.Element {
             </div>
 
             {/* Toggles */}
-            <div style={{ marginBottom: '8px', display: 'flex', justifyContent: 'space-between' }}>
+            <div style={{ marginBottom: '8px', display: 'flex', justifyContent: 'space-between', fontWeight: 600 }}>
               <label><input type="checkbox" checked={showGrid} onChange={(e) => setShowGrid(e.target.checked)} /> Show Grid</label>
               <label><input type="checkbox" checked={wrapEdges} onChange={(e) => setWrapEdges(e.target.checked)} /> Wrap Edges</label>
             </div>
 
             {/* Pattern selector */}
-            <div style={{ marginBottom: '8px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
-              <label style={{ fontWeight: 500 }}>Pattern:</label>
+            <div style={{ marginBottom: '8px', display: 'flex', flexDirection: 'column', gap: '4px', fontWeight: 600 }}>
+              <label>Pattern:</label>
               <select
                 value={pattern}
                 onChange={(e) => { setPattern(e.target.value); applyPattern(e.target.value); }}
@@ -407,9 +355,10 @@ export default function App(): JSX.Element {
                   border: '1px solid #374151',
                   background: 'rgba(31, 41, 55, 0.95)',
                   color: '#fff',
-                  fontWeight: 500,
+                  fontWeight: 600,
                   cursor: 'pointer',
                   outline: 'none',
+                  fontSize: '0.95rem'
                 }}
               >
                 <option value="">Select Pattern</option>
@@ -418,62 +367,43 @@ export default function App(): JSX.Element {
             </div>
 
             {/* Life-like rules */}
-{/* Life-like rules */}
-<div style={{ marginBottom: '8px' }}>
-  <div style={{ marginBottom: '4px', fontWeight: 500 }}>Survive counts:</div>
-  <div
-    style={{
-      display: 'flex',
-      flexWrap: 'nowrap',
-      justifyContent: 'space-between',
-      gap: '6px'
-    }}
-  >
-    {Array.from({ length: 9 }, (_, n) => (
-      <label key={`s${n}`} style={{ display: 'flex', alignItems: 'center', fontSize: '0.85rem' }}>
-        <input
-          type="checkbox"
-          checked={surviveCounts.includes(n)}
-          onChange={(e) => {
-            const checked = e.target.checked;
-            setSurviveCounts(prev => checked ? [...prev, n] : prev.filter(x => x !== n));
-          }}
-        />
-        <span style={{ marginLeft: '3px' }}>{n}</span>
-      </label>
-    ))}
-  </div>
+            <div style={{ marginBottom: '8px' }}>
+              <div style={{ marginBottom: '4px', fontWeight: 600 }}>Survive counts:</div>
+              <div style={{ display: 'flex', flexWrap: 'nowrap', justifyContent: 'space-between', gap: '6px' }}>
+                {Array.from({ length: 9 }, (_, n) => (
+                  <label key={`s${n}`} style={{ display: 'flex', alignItems: 'center', fontSize: '0.95rem', fontWeight: 600 }}>
+                    <input
+                      type="checkbox"
+                      checked={surviveCounts.includes(n)}
+                      onChange={(e) => {
+                        const checked = e.target.checked;
+                        setSurviveCounts(prev => checked ? [...prev, n] : prev.filter(x => x !== n));
+                      }}
+                    />
+                    <span style={{ marginLeft: '3px' }}>{n}</span>
+                  </label>
+                ))}
+              </div>
 
-  <div style={{ marginTop: '6px', marginBottom: '4px', fontWeight: 500 }}>Birth counts:</div>
-  <div
-    style={{
-      display: 'flex',
-      flexWrap: 'nowrap',
-      justifyContent: 'space-between',
-      gap: '6px'
-    }}
-  >
-    {Array.from({ length: 9 }, (_, n) => (
-      <label key={`b${n}`} style={{ display: 'flex', alignItems: 'center', fontSize: '0.85rem' }}>
-        <input
-          type="checkbox"
-          checked={birthCounts.includes(n)}
-          onChange={(e) => {
-            const checked = e.target.checked;
-            setBirthCounts(prev => checked ? [...prev, n] : prev.filter(x => x !== n));
-          }}
-        />
-        <span style={{ marginLeft: '3px' }}>{n}</span>
-      </label>
-    ))}
-  </div>
-</div>
-
-
-
+              <div style={{ marginTop: '6px', marginBottom: '4px', fontWeight: 600 }}>Birth counts:</div>
+              <div style={{ display: 'flex', flexWrap: 'nowrap', justifyContent: 'space-between', gap: '6px' }}>
+                {Array.from({ length: 9 }, (_, n) => (
+                  <label key={`b${n}`} style={{ display: 'flex', alignItems: 'center', fontSize: '0.95rem', fontWeight: 600 }}>
+                    <input
+                      type="checkbox"
+                      checked={birthCounts.includes(n)}
+                      onChange={(e) => {
+                        const checked = e.target.checked;
+                        setBirthCounts(prev => checked ? [...prev, n] : prev.filter(x => x !== n));
+                      }}
+                    />
+                    <span style={{ marginLeft: '3px' }}>{n}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
           </>
         )}
-
       </div>
 
       {/* Canvas */}
