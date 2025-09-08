@@ -260,27 +260,30 @@ export default function App(): JSX.Element {
         </div>
 
         {/* Sliders */}
-        {[
-          ['Speed', speed, 1, 24, setSpeed, ' gen/s'],
-          ['Cell size', cellSize, 6, 40, setCellSize, ' px'],
-          ['Rows', rows, 5, 300, handleRowsChange, ''],
-          ['Cols', cols, 5, 300, handleColsChange, ''],
-          ['Fill prob', fillProb, 0, 1, setFillProb, '']
-        ].map(([label, value, min, max, setter, unit], idx) => (
-          <div key={idx} style={{ display: 'flex', alignItems: 'center', marginBottom: '8px' }}>
-            <label style={{ width: '90px', fontWeight: 500 }}>{label}:</label>
-            <input
-              type="range"
-              min={min as number}
-              max={max as number}
-              step={label === 'Fill prob' ? 0.01 : 1}
-              value={value as number}
-              onChange={(e) => setter(Number(e.target.value))}
-              style={{ flex: 1, marginRight: '6px', height: '6px', borderRadius: '4px' }}
-            />
-            <div style={{ width: '40px', textAlign: 'right' }}>{unit === '' ? (value as number) : (label === 'Fill prob' ? `${Math.round(Number(value) * 100)}%` : `${value}${unit}`)}</div>
-          </div>
-        ))}
+{[
+  ['Speed', speed, 0.25, 10, setSpeed, ' gen/s'],   // <-- min=0, max=2
+  ['Cell size', cellSize, 6, 40, setCellSize, ' px'],
+  ['Rows', rows, 5, 300, handleRowsChange, ''],
+  ['Cols', cols, 5, 300, handleColsChange, ''],
+  ['Fill prob', fillProb, 0, 1, setFillProb, '']
+].map(([label, value, min, max, setter, unit], idx) => (
+  <div key={idx} style={{ display: 'flex', alignItems: 'center', marginBottom: '8px' }}>
+    <label style={{ width: '90px', fontWeight: 500 }}>{label}:</label>
+    <input
+      type="range"
+      min={min as number}
+      max={max as number}
+      step={label === 'Speed' ? 0.25 : label === 'Fill prob' ? 0.01 : 1}  // <-- fractional step for speed
+      value={value as number}
+      onChange={(e) => setter(Number(e.target.value))}
+      style={{ flex: 1, marginRight: '6px', height: '6px', borderRadius: '4px' }}
+    />
+    <div style={{ width: '40px', textAlign: 'right' }}>
+      {unit === '' ? (value as number) : (label === 'Fill prob' ? `${Math.round(Number(value) * 100)}%` : `${value}${unit}`)}
+    </div>
+  </div>
+))}
+
 
         {/* Color pickers */}
         <div style={{ marginBottom: '8px', display: 'flex', justifyContent: 'space-between' }}>
