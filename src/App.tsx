@@ -400,7 +400,7 @@ useEffect(() => {
             </div>
 
             {/* Sliders */}
-            {[['Speed', speed, 0.25, 30, setSpeed, ' gen/s'],
+            {[['Speed', speed, 0.25, 100, setSpeed, ' gen/s'],
               ['Cell size', cellSize, 1, 40, setCellSize, ' px'],
               ['Rows', rows, 5, 500, handleRowsChange, ''],
               ['Cols', cols, 5, 500, handleColsChange, '']].map(([label, value, min, max, setter, unit], idx) => (
