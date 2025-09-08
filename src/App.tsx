@@ -243,7 +243,7 @@ export default function App(): JSX.Element {
           background: 'rgba(17,24,39,0.95)',
           padding: '12px',
           borderRadius: '10px',
-          maxWidth: '300px',
+          maxWidth: '350px',
           zIndex: 1000,
           boxShadow: '0 4px 12px rgba(0,0,0,0.3)'
         }}
@@ -255,17 +255,83 @@ export default function App(): JSX.Element {
         >Conway's Game of Life</div>
 
         {/* Buttons */}
-        <div style={{ display: 'flex', gap: '6px', marginBottom: '10px', flexWrap: 'wrap' }}>
-          <button onClick={toggleRunning} style={{ flex: 1, padding: '6px', borderRadius: '6px', background: running ? '#06b6d4' : '#374151', color: '#fff', border: 'none' }}>
-            {running ? 'Stop' : 'Start'}
-          </button>
-          <button onClick={stepOnce} style={{ flex: 1, padding: '6px', borderRadius: '6px' }}>Step</button>
-          <button onClick={randomize} style={{ flex: 1, padding: '6px', borderRadius: '6px' }}>Randomize</button>
-          <button onClick={clear} style={{ flex: 1, padding: '6px', borderRadius: '6px' }}>Clear</button>
-          <button onClick={() => setShowAdvanced(prev => !prev)} style={{ flex: 1, padding: '6px', borderRadius: '6px' }}>
-            Advanced
-          </button>
-        </div>
+<div style={{ display: 'flex', gap: '6px', marginBottom: '10px', flexWrap: 'nowrap' }}>
+  <button
+    onClick={toggleRunning}
+    style={{
+      width: '60px',
+      padding: '6px',
+      borderRadius: '6px',
+      background: running ? '#06b6d4' : '#374151',
+      color: '#fff',
+      border: 'none',
+      cursor: 'pointer'
+    }}
+  >
+    {running ? 'Stop' : 'Start'}
+  </button>
+
+  <button
+    onClick={stepOnce}
+    style={{
+      width: '60px',
+      padding: '6px',
+      borderRadius: '6px',
+      background: '#374151',
+      color: '#fff',
+      border: 'none',
+      cursor: 'pointer'
+    }}
+  >
+    Step
+  </button>
+
+  <button
+    onClick={randomize}
+    style={{
+      width: '80px',
+      padding: '6px',
+      borderRadius: '6px',
+      background: '#374151',
+      color: '#fff',
+      border: 'none',
+      cursor: 'pointer'
+    }}
+  >
+    Randomize
+  </button>
+
+  <button
+    onClick={clear}
+    style={{
+      width: '60px',
+      padding: '6px',
+      borderRadius: '6px',
+      background: '#374151',
+      color: '#fff',
+      border: 'none',
+      cursor: 'pointer'
+    }}
+  >
+    Clear
+  </button>
+
+  <button
+    onClick={() => setShowAdvanced(prev => !prev)}
+    style={{
+      width: '80px',
+      padding: '6px',
+      borderRadius: '6px',
+      background: '#374151',
+      color: '#fff',
+      border: 'none',
+      cursor: 'pointer'
+    }}
+  >
+    Advanced
+  </button>
+</div>
+
 
         {/* Sliders */}
         {[
