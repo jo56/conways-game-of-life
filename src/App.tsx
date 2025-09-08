@@ -264,14 +264,29 @@ export default function App(): JSX.Element {
 
   const patternOptions = ['Glider', 'Blinker', 'Block'];
   const applyPattern = (pat: string) => {
+  setGrid(g => {
+    const newGrid = cloneGrid(g); // keep existing cells
     const centerR = Math.floor(rows / 2);
     const centerC = Math.floor(cols / 2);
-    const ng = createEmptyGrid(rows, cols);
-    if (pat === 'Glider') [[1,0],[2,1],[0,2],[1,2],[2,2]].forEach(([r,c]) => ng[centerR+r][centerC+c] = 1);
-    if (pat === 'Blinker') [[0,0],[0,1],[0,2]].forEach(([r,c]) => ng[centerR+r][centerC+c] = 1);
-    if (pat === 'Block') [[0,0],[0,1],[1,0],[1,1]].forEach(([r,c]) => ng[centerR+r][centerC+c] = 1);
-    setGrid(ng);
-  };
+
+    const patternCells: [number, number][] =
+      pat === 'Glider' ? [[1,0],[2,1],[0,2],[1,2],[2,2]] :
+      pat === 'Blinker' ? [[0,0],[0,1],[0,2]] :
+      pat === 'Block' ? [[0,0],[0,1],[1,0],[1,1]] :
+      [];
+
+    patternCells.forEach(([r, c]) => {
+      const row = centerR + r;
+      const col = centerC + c;
+      if (row >= 0 && row < rows && col >= 0 && col < cols) {
+        newGrid[row][col] = 1;
+      }
+    });
+
+    return newGrid;
+  });
+};
+
 
   return (
     <div style={{
