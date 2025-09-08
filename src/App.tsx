@@ -23,8 +23,8 @@ export default function App(): JSX.Element {
   const drawMode = useRef(1);
 
   const [cellSize, setCellSize] = useState(20);
-  const [rows] = useState(20);
-  const [cols] = useState(30);
+  const [rows, setRows] = useState(20);
+  const [cols, setCols] = useState(30);
   const [grid, setGrid] = useState<Uint8Array[]>(() => createEmptyGrid(rows, cols));
   const [running, setRunning] = useState(false);
   const [speed, setSpeed] = useState(8);
@@ -155,8 +155,8 @@ export default function App(): JSX.Element {
   };
 
   const randomize = () => {
-    setGrid((g) => {
-      const ng = createEmptyGrid(g.length, g[0].length);
+    setGrid(() => {
+      const ng = createEmptyGrid(rows, cols);
       for (let r = 0; r < ng.length; r++) {
         for (let c = 0; c < ng[0].length; c++) {
           ng[r][c] = Math.random() > 0.75 ? 1 : 0;
@@ -166,39 +166,75 @@ export default function App(): JSX.Element {
     });
   };
 
-  const clear = () => setGrid((g) => createEmptyGrid(g.length, g[0].length));
+  const clear = () => setGrid(() => createEmptyGrid(rows, cols));
   const stepOnce = () => setGrid((g) => step(g));
 
+  const controlRowStyle: React.CSSProperties = {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+    marginBottom: '6px'
+  };
+
+  const infoLabelStyle: React.CSSProperties = {
+    width: '80px'
+  };
+
+  const sliderStyle: React.CSSProperties = {
+    flex: 1
+  };
+
   return (
-    <div className="app">
-      <div className="panel controls">
-        <div className="row"><strong>Conway's Game of Life</strong></div>
-        <div className="row">
-          <button onClick={toggleRunning} className={running ? 'primary' : ''}>{running ? 'Stop' : 'Start'}</button>
-          <button onClick={stepOnce}>Step</button>
-          <button onClick={randomize}>Randomize</button>
-          <button onClick={clear}>Clear</button>
+    <div className="app" style={{ padding: '10px', fontFamily: 'sans-serif', color: '#f0f0f0' }}>
+      <div className="panel controls" style={{ marginBottom: '10px', padding: '10px', background: '#111827', borderRadius: '8px' }}>
+        <div style={controlRowStyle}><strong>Conway's Game of Life</strong></div>
+        <div style={controlRowStyle}>
+          <button onClick={toggleRunning} style={{ padding: '4px 8px', background: running ? '#06b6d4' : '#374151', border: 'none', color: '#fff', borderRadius: '4px' }}>{running ? 'Stop' : 'Start'}</button>
+          <button onClick={stepOnce} style={{ padding: '4px 8px' }}>Step</button>
+          <button onClick={randomize} style={{ padding: '4px 8px' }}>Randomize</button>
+          <button onClick={clear} style={{ padding: '4px 8px' }}>Clear</button>
         </div>
-        <div className="row">
-          <label className="info">Speed:</label>
-          <input className="slider" type="range" min={1} max={24} value={speed} onChange={(e) => setSpeed(Number(e.target.value))} />
-          <div className="info">{speed} gen/s</div>
+
+        <div style={controlRowStyle}>
+        <label style={infoLabelStyle}>Speed:</label>
+        <input className="slider" type="range" min={1} max={24} value={speed} onChange={(e) => setSpeed(Number(e.target.value))} style={sliderStyle} />
+        <div>{speed} gen/s</div>
         </div>
-        <div className="row">
-          <label className="info">Cell size:</label>
-          <input className="slider" type="range" min={6} max={40} value={cellSize} onChange={(e) => setCellSize(Number(e.target.value))} />
-          <div className="info">{cellSize}px</div>
+
+        <div style={controlRowStyle}>
+        <label style={infoLabelStyle}>Cell size:</label>
+        <input className="slider" type="range" min={6} max={40} value={cellSize} onChange={(e) => setCellSize(Number(e.target.value))} style={sliderStyle} />
+        <div>{cellSize}px</div>
         </div>
-        <div className="row info">Rows: {rows} — Cols: {cols}</div>
-        <div className="row info">Click or drag on canvas to toggle cells. Grid wraps at edges (toroidal).</div>
+
+        <div style={controlRowStyle}>
+        <label style={infoLabelStyle}>Rows:</label>
+        <input className="slider" type="range" min={5} max={200} value={rows} onChange={(e) => {
+            const newRows = Number(e.target.value);
+            setRows(newRows);
+            setGrid(createEmptyGrid(newRows, cols));
+        }} style={sliderStyle} />
+        <div>{rows}</div>
+        </div>
+
+        <div style={controlRowStyle}>
+        <label style={infoLabelStyle}>Cols:</label>
+        <input className="slider" type="range" min={5} max={200} value={cols} onChange={(e) => {
+            const newCols = Number(e.target.value);
+            setCols(newCols);
+            setGrid(createEmptyGrid(rows, newCols));
+        }} style={sliderStyle} />
+        <div>{cols}</div>
+        </div>
       </div>
 
-      <div className="canvasWrap panel" style={{minHeight:400}}>
+      <div className="canvasWrap panel" style={{ minHeight: 400, background: '#111827', borderRadius: '8px', padding: '10px' }}>
         <canvas
           ref={canvasRef}
           onMouseDown={handleMouseDown}
           onMouseUp={handleMouseUp}
           onMouseMove={handleMouseMove}
+          style={{ display: 'block', margin: '0 auto', cursor: 'crosshair', background: DEAD_COLOR }}
         />
       </div>
     </div>
