@@ -212,20 +212,8 @@ useEffect(() => {
   });
 
   const clear = () => {
-    setGrid(createEmptyGrid(defaults.rows, defaults.cols));
-    setCellSize(defaults.cellSize);
-    setRows(defaults.rows);
-    setCols(defaults.cols);
-    setSpeed(defaults.speed);
-    setFillProb(defaults.fillProb);
-    setShowGrid(defaults.showGrid);
-    setAliveColor(defaults.aliveColor);
-    setDeadColor(defaults.deadColor);
-    setWrapEdges(defaults.wrapEdges);
-    setSurviveCounts(defaults.surviveCounts);
-    setBirthCounts(defaults.birthCounts);
-    setPattern(defaults.pattern);
-  };
+  setGrid(createEmptyGrid(rows, cols));
+};
 
   const stepOnce = () => setGrid(g => step(g));
 
