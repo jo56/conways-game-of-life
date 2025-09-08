@@ -335,25 +335,32 @@ export default function App(): JSX.Element {
 
         {/* Sliders */}
         {[
-          ['Speed', speed, 0, 5, setSpeed, ' gen/s'],
-          ['Cell size', cellSize, 6, 40, setCellSize, ' px'],
-          ['Rows', rows, 5, 300, handleRowsChange, ''],
-          ['Cols', cols, 5, 300, handleColsChange, '']
-        ].map(([label, value, min, max, setter, unit], idx) => (
-          <div key={idx} style={{ display: 'flex', alignItems: 'center', marginBottom: '8px' }}>
-            <label style={{ width: '90px', fontWeight: 500 }}>{label}:</label>
-            <input
-              type="range"
-              min={min as number}
-              max={max as number}
-              step={label === 'Speed' ? 0.25 : 1}
-              value={value as number}
-              onChange={(e) => setter(Number(e.target.value))}
-              style={{ flex: 1, marginRight: '6px', height: '6px', borderRadius: '4px' }}
-            />
-            <div style={{ width: '40px', textAlign: 'right' }}>{`${value}${unit}`}</div>
-          </div>
-        ))}
+  ['Speed', speed, 0, 5, setSpeed, ' gen/s'],
+  ['Cell size', cellSize, 6, 40, setCellSize, ' px'],
+  ['Rows', rows, 5, 300, handleRowsChange, ''],
+  ['Cols', cols, 5, 300, handleColsChange, '']
+].map(([label, value, min, max, setter, unit], idx) => (
+  <div key={idx} style={{ display: 'flex', alignItems: 'center', marginBottom: '8px' }}>
+    <label style={{ width: '90px', fontWeight: 500 }}>{label}:</label>
+
+    {/* Slider container */}
+    <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: '6px' }}>
+      <input
+        type="range"
+        min={min as number}
+        max={max as number}
+        step={label === 'Speed' ? 0.25 : 1}
+        value={value as number}
+        onChange={(e) => setter(Number(e.target.value))}
+        style={{ flex: 1, height: '6px', borderRadius: '4px' }}
+      />
+      <span style={{ minWidth: '50px', textAlign: 'right', fontSize: '0.85rem' }}>
+        {`${value}${unit}`}
+      </span>
+    </div>
+  </div>
+))}
+
 
         {/* Advanced settings */}
         {showAdvanced && (
