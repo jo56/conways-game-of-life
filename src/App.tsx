@@ -70,6 +70,7 @@ useEffect(() => {
   const isDragging = useRef(false);
   const dragOffset = useRef({ x: 0, y: 0 });
   const [panelPos, setPanelPos] = useState({ x: 20, y: 20 });
+  const mousePos = useRef({ x: 0, y: 0 });
 
   const [isMobile, setIsMobile] = useState(false);
   useEffect(() => {
@@ -211,20 +212,8 @@ useEffect(() => {
   });
 
   const clear = () => {
-    setGrid(createEmptyGrid(defaults.rows, defaults.cols));
-    setCellSize(defaults.cellSize);
-    setRows(defaults.rows);
-    setCols(defaults.cols);
-    setSpeed(defaults.speed);
-    setFillProb(defaults.fillProb);
-    setShowGrid(defaults.showGrid);
-    setAliveColor(defaults.aliveColor);
-    setDeadColor(defaults.deadColor);
-    setWrapEdges(defaults.wrapEdges);
-    setSurviveCounts(defaults.surviveCounts);
-    setBirthCounts(defaults.birthCounts);
-    setPattern(defaults.pattern);
-  };
+  setGrid(createEmptyGrid(rows, cols));
+};
 
   const stepOnce = () => setGrid(g => step(g));
 
@@ -236,17 +225,55 @@ useEffect(() => {
 
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
+      mousePos.current = { x: e.clientX, y: e.clientY };
+      //console.log('Mouse position updated:', mousePos.current); 
+      
       if (isDragging.current)
         setPanelPos({ x: e.clientX - dragOffset.current.x, y: e.clientY - dragOffset.current.y });
     };
     const handleMouseUp = () => { isDragging.current = false; };
+    
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Shift') {
+        e.preventDefault();
+        
+        console.log('Shift pressed! Current state:', {
+          isMobile,
+          mousePos: mousePos.current,
+          currentPanelPos: panelPos
+        });
+        
+        setIsMobile(false);
+        
+        const mouseX = mousePos.current.x || window.innerWidth / 2;
+        const mouseY = mousePos.current.y || window.innerHeight / 2;
+        
+        // Simple positioning - just put it at mouse location with small offset
+        const newX = Math.max(10, Math.min(mouseX - 200, window.innerWidth - 440));
+        const newY = Math.max(10, Math.min(mouseY - 50, window.innerHeight - 400));
+        
+        console.log('Setting new panel position:', { newX, newY });
+        
+        // Force the panel position update
+        setPanelPos({ x: newX, y: newY });
+        
+        // Also force a re-render by updating a dummy state if needed
+        setTimeout(() => {
+          console.log('Panel position after update:', panelPos);
+        }, 100);
+      }
+    };
+    
     window.addEventListener('mousemove', handleMouseMove);
     window.addEventListener('mouseup', handleMouseUp);
+    window.addEventListener('keydown', handleKeyDown);
+    
     return () => {
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('mouseup', handleMouseUp);
+      window.removeEventListener('keydown', handleKeyDown);
     };
-  }, []);
+  }, [isMobile, panelPos]); // Add dependencies
 
   const handleRowsChange = (newRows: number) => {
     setRows(newRows);
@@ -312,7 +339,7 @@ useEffect(() => {
       <div
         ref={panelRef}
         style={{
-          position: isMobile ? 'relative' : 'absolute',
+          position: isMobile ? 'relative' : 'fixed',
           top: isMobile ? undefined : panelPos.y,
           left: isMobile ? undefined : panelPos.x,
           marginTop: isMobile ? '10px' : undefined,
@@ -402,8 +429,8 @@ useEffect(() => {
             {/* Sliders */}
             {[['Speed', speed, 0.25, 100, setSpeed, ' gen/s'],
               ['Cell size', cellSize, 1, 40, setCellSize, ' px'],
-              ['Rows', rows, 5, 500, handleRowsChange, ''],
-              ['Cols', cols, 5, 500, handleColsChange, '']].map(([label, value, min, max, setter, unit], idx) => (
+              ['Rows', rows, 5, 1000, handleRowsChange, ''],
+              ['Cols', cols, 5, 1000, handleColsChange, '']].map(([label, value, min, max, setter, unit], idx) => (
               <div key={idx} style={{ display: 'flex', alignItems: 'center', marginBottom: '10px' }}>
                 <label style={{ width: '100px', fontWeight: 600 }}>{label}:</label>
                 <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: '8px' }}>
