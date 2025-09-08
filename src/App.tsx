@@ -60,6 +60,12 @@ export default function App(): JSX.Element {
   const birthRef = useRef(birthCounts);
   useEffect(() => { surviveRef.current = surviveCounts; }, [surviveCounts]);
   useEffect(() => { birthRef.current = birthCounts; }, [birthCounts]);
+  const speedRef = useRef(speed);
+useEffect(() => {
+  speedRef.current = speed;
+}, [speed]);
+
+  
 
   const isDragging = useRef(false);
   const dragOffset = useRef({ x: 0, y: 0 });
@@ -145,18 +151,18 @@ export default function App(): JSX.Element {
   useEffect(() => draw(), [draw]);
 
   const runLoop = () => {
-    let lastTime = performance.now();
-    const loop = (time: number) => {
-      if (!runningRef.current) return;
-      const interval = 1000 / Math.max(0.25, speed);
-      if (time - lastTime >= interval) {
-        setGrid(g => step(g));
-        lastTime = time;
-      }
-      rafRef.current = requestAnimationFrame(loop);
-    };
+  let lastTime = performance.now();
+  const loop = (time: number) => {
+    if (!runningRef.current) return;
+    const interval = 1000 / Math.max(0.25, speedRef.current);  // <-- use ref
+    if (time - lastTime >= interval) {
+      setGrid(g => step(g));
+      lastTime = time;
+    }
     rafRef.current = requestAnimationFrame(loop);
   };
+  rafRef.current = requestAnimationFrame(loop);
+};
 
   const toggleRunning = () => {
     runningRef.current = !runningRef.current;
@@ -394,7 +400,7 @@ export default function App(): JSX.Element {
             </div>
 
             {/* Sliders */}
-            {[['Speed', speed, 0, 10, setSpeed, ' gen/s'],
+            {[['Speed', speed, 0.25, 30, setSpeed, ' gen/s'],
               ['Cell size', cellSize, 1, 40, setCellSize, ' px'],
               ['Rows', rows, 5, 500, handleRowsChange, ''],
               ['Cols', cols, 5, 500, handleColsChange, '']].map(([label, value, min, max, setter, unit], idx) => (
