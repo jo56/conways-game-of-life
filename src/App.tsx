@@ -70,6 +70,7 @@ useEffect(() => {
   const isDragging = useRef(false);
   const dragOffset = useRef({ x: 0, y: 0 });
   const [panelPos, setPanelPos] = useState({ x: 20, y: 20 });
+  const mousePos = useRef({ x: 0, y: 0 });
 
   const [isMobile, setIsMobile] = useState(false);
   useEffect(() => {
@@ -236,15 +237,39 @@ useEffect(() => {
 
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
+      // Track mouse position globally
+      mousePos.current = { x: e.clientX, y: e.clientY };
+      
       if (isDragging.current)
         setPanelPos({ x: e.clientX - dragOffset.current.x, y: e.clientY - dragOffset.current.y });
     };
     const handleMouseUp = () => { isDragging.current = false; };
+    
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Shift') {
+        e.preventDefault();
+        // Teleport panel to mouse position with bounds checking
+        const panelWidth = 430; // maxWidth from panel style
+        const panelHeight = 600; // estimated height
+        const viewportWidth = window.innerWidth;
+        const viewportHeight = window.innerHeight;
+        
+        // Ensure panel stays within viewport bounds
+        const x = Math.min(Math.max(0, mousePos.current.x - panelWidth / 2), viewportWidth - panelWidth);
+        const y = Math.min(Math.max(0, mousePos.current.y - 50), viewportHeight - panelHeight);
+        
+        setPanelPos({ x, y });
+      }
+    };
+    
     window.addEventListener('mousemove', handleMouseMove);
     window.addEventListener('mouseup', handleMouseUp);
+    window.addEventListener('keydown', handleKeyDown);
+    
     return () => {
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('mouseup', handleMouseUp);
+      window.removeEventListener('keydown', handleKeyDown);
     };
   }, []);
 
