@@ -283,7 +283,7 @@ export default function App(): JSX.Element {
           style={{
             textAlign: 'center',
             marginBottom: '12px',
-            fontWeight: 'bold',
+            fontWeight: 500,
             cursor: isMobile ? 'default' : 'move',
             userSelect: 'none',
             padding: '6px 0',
