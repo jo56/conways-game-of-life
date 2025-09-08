@@ -297,12 +297,30 @@ export default function App(): JSX.Element {
         </div>
 
         {/* Pattern selector */}
-        <div style={{ marginBottom: '8px' }}>
-          <select value={pattern} onChange={(e) => { setPattern(e.target.value); applyPattern(e.target.value); }} style={{ width: '100%', padding: '4px', borderRadius: '4px' }}>
-            <option value="">Select Pattern</option>
-            {patternOptions.map(p => <option key={p} value={p}>{p}</option>)}
-          </select>
-        </div>
+<div style={{ marginBottom: '8px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+  <label style={{ fontWeight: 500 }}>Pattern:</label>
+  <select
+    value={pattern}
+    onChange={(e) => { setPattern(e.target.value); applyPattern(e.target.value); }}
+    style={{
+      width: '100%',
+      padding: '6px 8px',
+      borderRadius: '6px',
+      border: '1px solid #374151',
+      background: 'rgba(31, 41, 55, 0.95)',
+      color: '#fff',
+      fontWeight: 500,
+      cursor: 'pointer',
+      outline: 'none',
+    }}
+  >
+    <option value="">Select Pattern</option>
+    {patternOptions.map(p => (
+      <option key={p} value={p}>{p}</option>
+    ))}
+  </select>
+</div>
+
 
         {/* Life-like rules */}
 <div style={{ marginBottom: '8px' }}>
