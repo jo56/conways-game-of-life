@@ -15,17 +15,19 @@ function cloneGrid(grid: Uint8Array[]): Uint8Array[] {
 }
 
 export default function App(): JSX.Element {
-  const containerRef = useRef<HTMLDivElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const rafRef = useRef<number | null>(null);
   const runningRef = useRef(false);
+  const speedRef = useRef(8);
 
   const [cellSize, setCellSize] = useState(20);
-  const [rows, setRows] = useState(20);
-  const [cols, setCols] = useState(30);
+  const [rows] = useState(20);
+  const [cols] = useState(30);
   const [grid, setGrid] = useState<Uint8Array[]>(() => createEmptyGrid(rows, cols));
   const [running, setRunning] = useState(false);
   const [speed, setSpeed] = useState(8);
+
+  speedRef.current = speed; // always keep ref updated
 
   const countNeighbors = (g: Uint8Array[], r: number, c: number) => {
     const R = g.length;
@@ -90,25 +92,24 @@ export default function App(): JSX.Element {
 
   useEffect(() => draw(), [draw]);
 
-  useEffect(() => {
-    let last = 0;
-    const loop = (t: number) => {
+  const runLoop = () => {
+    let lastTime = performance.now();
+    const loop = (time: number) => {
       if (!runningRef.current) return;
-      const interval = 1000 / Math.max(1, speed);
-      if (t - last >= interval) {
+      const interval = 1000 / Math.max(1, speedRef.current);
+      if (time - lastTime >= interval) {
         setGrid((g) => step(g));
-        last = t;
+        lastTime = time;
       }
       rafRef.current = requestAnimationFrame(loop);
     };
-    if (runningRef.current) rafRef.current = requestAnimationFrame(loop);
-    return () => { if (rafRef.current) cancelAnimationFrame(rafRef.current); };
-  }, [speed, step]);
+    rafRef.current = requestAnimationFrame(loop);
+  };
 
   const toggleRunning = () => {
     runningRef.current = !runningRef.current;
     setRunning(runningRef.current);
-    if (runningRef.current) rafRef.current = requestAnimationFrame((t) => setGrid((g) => step(g)));
+    if (runningRef.current) runLoop();
     else if (rafRef.current) cancelAnimationFrame(rafRef.current);
   };
 
@@ -164,7 +165,7 @@ export default function App(): JSX.Element {
         <div className="row info">Click canvas to toggle cells. Grid wraps at edges (toroidal).</div>
       </div>
 
-      <div ref={containerRef} className="canvasWrap panel" style={{minHeight:400}}>
+      <div className="canvasWrap panel" style={{minHeight:400}}>
         <canvas ref={canvasRef} onClick={handleCanvasClick} />
       </div>
     </div>
