@@ -421,7 +421,7 @@ export default function App(): JSX.Element {
             {showAdvanced && (
               <>
                 <div style={{ display: 'flex', alignItems: 'center', marginBottom: '10px' }}>
-                  <label style={{ width: '100px', fontWeight: 600 }}>Fill prob:</label>
+                  <label style={{ width: '100px', fontWeight: 600 }}>Random Fill:</label>
                   <input
                     type="range"
                     min={0}
