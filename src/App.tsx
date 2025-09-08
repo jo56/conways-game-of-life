@@ -19,6 +19,8 @@ export default function App(): JSX.Element {
   const rafRef = useRef<number | null>(null);
   const runningRef = useRef(false);
   const speedRef = useRef(8);
+  const isMouseDown = useRef(false);
+  const drawMode = useRef(1);
 
   const [cellSize, setCellSize] = useState(20);
   const [rows] = useState(20);
@@ -27,7 +29,7 @@ export default function App(): JSX.Element {
   const [running, setRunning] = useState(false);
   const [speed, setSpeed] = useState(8);
 
-  speedRef.current = speed; // always keep ref updated
+  speedRef.current = speed;
 
   const countNeighbors = (g: Uint8Array[], r: number, c: number) => {
     const R = g.length;
@@ -113,15 +115,41 @@ export default function App(): JSX.Element {
     else if (rafRef.current) cancelAnimationFrame(rafRef.current);
   };
 
-  const handleCanvasClick = (e: React.MouseEvent) => {
+  const handleMouseDown = (e: React.MouseEvent) => {
+    isMouseDown.current = true;
     const canvas = canvasRef.current;
     if (!canvas) return;
     const rect = canvas.getBoundingClientRect();
     const x = Math.floor((e.clientX - rect.left) / cellSize);
     const y = Math.floor((e.clientY - rect.top) / cellSize);
+
     setGrid((g) => {
       const ng = cloneGrid(g);
-      if (y >= 0 && y < rows && x >= 0 && x < cols) ng[y][x] = ng[y][x] ? 0 : 1;
+      if (y >= 0 && y < rows && x >= 0 && x < cols) {
+        drawMode.current = ng[y][x] ? 0 : 1;
+        ng[y][x] = drawMode.current;
+      }
+      return ng;
+    });
+  };
+
+  const handleMouseUp = () => {
+    isMouseDown.current = false;
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isMouseDown.current) return;
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const rect = canvas.getBoundingClientRect();
+    const x = Math.floor((e.clientX - rect.left) / cellSize);
+    const y = Math.floor((e.clientY - rect.top) / cellSize);
+
+    setGrid((g) => {
+      const ng = cloneGrid(g);
+      if (y >= 0 && y < rows && x >= 0 && x < cols) {
+        ng[y][x] = drawMode.current;
+      }
       return ng;
     });
   };
@@ -162,11 +190,16 @@ export default function App(): JSX.Element {
           <div className="info">{cellSize}px</div>
         </div>
         <div className="row info">Rows: {rows} — Cols: {cols}</div>
-        <div className="row info">Click canvas to toggle cells. Grid wraps at edges (toroidal).</div>
+        <div className="row info">Click or drag on canvas to toggle cells. Grid wraps at edges (toroidal).</div>
       </div>
 
       <div className="canvasWrap panel" style={{minHeight:400}}>
-        <canvas ref={canvasRef} onClick={handleCanvasClick} />
+        <canvas
+          ref={canvasRef}
+          onMouseDown={handleMouseDown}
+          onMouseUp={handleMouseUp}
+          onMouseMove={handleMouseMove}
+        />
       </div>
     </div>
   );
