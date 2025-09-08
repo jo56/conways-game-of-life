@@ -49,7 +49,7 @@ export default function App(): JSX.Element {
   const panelRef = useRef<HTMLDivElement | null>(null);
   const isDragging = useRef(false);
   const dragOffset = useRef({ x: 0, y: 0 });
-  const [panelPos, setPanelPos] = useState({ x: 20, y: 20 });
+  const [panelPos, setPanelPos] = useState({ x: 800, y: 20 }); // start away from grid
 
   // Core logic
   const countNeighbors = (g: Uint8Array[], r: number, c: number) => {
@@ -224,10 +224,12 @@ export default function App(): JSX.Element {
     if (pat === 'Blinker') [[0,0],[0,1],[0,2]].forEach(([r,c]) => ng[centerR+r][centerC+c] = 1);
     if (pat === 'Block') [[0,0],[0,1],[1,0],[1,1]].forEach(([r,c]) => ng[centerR+r][centerC+c] = 1);
     setGrid(ng);
+    setPattern(pat);
   };
 
   return (
     <div style={{ position: 'relative', width: '100%', height: '100vh', overflow: 'auto', background: '#111827' }}>
+      {/* Settings Panel */}
       <div
         ref={panelRef}
         style={{
@@ -237,9 +239,13 @@ export default function App(): JSX.Element {
           background: 'rgba(17,24,39,0.95)',
           padding: '12px',
           borderRadius: '10px',
+          minWidth: '250px',
           maxWidth: '430px',
           zIndex: 1000,
-          boxShadow: '0 4px 12px rgba(0,0,0,0.3)'
+          boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '12px'
         }}
       >
         {/* Header */}
@@ -247,7 +253,6 @@ export default function App(): JSX.Element {
           onMouseDown={handleHeaderMouseDown}
           style={{
             textAlign: 'center',
-            marginBottom: '12px',
             fontWeight: 'bold',
             cursor: 'move',
             userSelect: 'none',
@@ -259,18 +264,19 @@ export default function App(): JSX.Element {
         >Conway's Game of Life</div>
 
         {/* Buttons */}
-        <div style={{ display: 'flex', gap: '6px', marginBottom: '12px', flexWrap: 'nowrap' }}>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
           {[
             { label: running ? 'Stop' : 'Start', onClick: toggleRunning, bg: running ? '#06b6d4' : '#374151' },
             { label: 'Step', onClick: stepOnce, bg: '#374151' },
             { label: 'Random', onClick: randomize, bg: '#374151' },
             { label: 'Clear', onClick: clear, bg: '#374151' },
-            { label: 'Adv.', onClick: () => setShowAdvanced(prev => !prev), bg: '#374151' },
+            { label: 'Adv.', onClick: () => setShowAdvanced(prev => !prev), bg: '#374151' }
           ].map(({ label, onClick, bg }) => (
             <button
               key={label}
               onClick={onClick}
               style={{
+                flex: '1 1 100px',
                 padding: '6px 12px',
                 borderRadius: '6px',
                 background: bg,
@@ -278,8 +284,7 @@ export default function App(): JSX.Element {
                 border: 'none',
                 cursor: 'pointer',
                 fontWeight: 'normal',
-                fontSize: '0.95rem',
-                whiteSpace: 'nowrap',
+                fontSize: '0.95rem'
               }}
             >
               {label}
@@ -294,47 +299,35 @@ export default function App(): JSX.Element {
           ['Rows', rows, 5, 300, handleRowsChange, ''],
           ['Cols', cols, 5, 300, handleColsChange, '']
         ].map(([label, value, min, max, setter, unit], idx) => (
-          <div key={idx} style={{ display: 'flex', alignItems: 'center', marginBottom: '10px' }}>
-            <label style={{ width: '100px', fontWeight: 600 }}>{label}:</label>
-            <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <input
-                type="range"
-                min={min as number}
-                max={max as number}
-                step={label === 'Speed' ? 0.25 : 1}
-                value={value as number}
-                onChange={(e) => setter(Number(e.target.value))}
-                style={{ flex: 1, height: '8px', borderRadius: '4px' }}
-              />
-              <span style={{ minWidth: '50px', textAlign: 'right', fontSize: '0.95rem' }}>
-                {`${value}${unit}`}
-              </span>
-            </div>
+          <div key={idx} style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '8px' }}>
+            <label style={{ minWidth: '90px', fontWeight: 600 }}>{label}:</label>
+            <input
+              type="range"
+              min={min as number}
+              max={max as number}
+              step={label === 'Speed' ? 0.25 : 1}
+              value={value as number}
+              onChange={(e) => setter(Number(e.target.value))}
+              style={{ flex: '1 1 auto', height: '8px', borderRadius: '4px' }}
+            />
+            <span style={{ minWidth: '50px', textAlign: 'right', fontSize: '0.95rem' }}>
+              {`${value}${unit}`}
+            </span>
           </div>
         ))}
 
         {/* Advanced Settings */}
         {showAdvanced && (
-          <>
-            {/* Fill prob */}
-            <div style={{ display: 'flex', alignItems: 'center', marginBottom: '10px' }}>
-              <label style={{ width: '100px', fontWeight: 600 }}>Fill prob:</label>
-              <input
-                type="range"
-                min={0}
-                max={1}
-                step={0.01}
-                value={fillProb}
-                onChange={(e) => setFillProb(Number(e.target.value))}
-                style={{ flex: 1, marginRight: '8px', height: '8px', borderRadius: '4px' }}
-              />
-              <div style={{ width: '40px', textAlign: 'right', fontSize: '0.95rem' }}>
-                {`${Math.round(fillProb * 100)}%`}
-              </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            {/* Fill Prob */}
+            <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '8px' }}>
+              <label style={{ minWidth: '90px', fontWeight: 600 }}>Fill prob:</label>
+              <input type="range" min={0} max={1} step={0.01} value={fillProb} onChange={e => setFillProb(Number(e.target.value))} style={{ flex: '1 1 auto', height: '8px', borderRadius: '4px' }} />
+              <span style={{ minWidth: '40px', textAlign: 'right', fontSize: '0.95rem' }}>{`${Math.round(fillProb * 100)}%`}</span>
             </div>
 
             {/* Colors */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px', gap: '8px' }}>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center' }}>
               <label style={{ fontWeight: 600 }}>Alive:</label>
               <input type="color" value={aliveColor} onChange={e => setAliveColor(e.target.value)} />
               <label style={{ fontWeight: 600 }}>Dead:</label>
@@ -342,17 +335,17 @@ export default function App(): JSX.Element {
             </div>
 
             {/* Toggles */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px', gap: '8px', fontWeight: 600 }}>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', fontWeight: 600 }}>
               <label><input type="checkbox" checked={showGrid} onChange={e => setShowGrid(e.target.checked)} /> Show Grid</label>
               <label><input type="checkbox" checked={wrapEdges} onChange={e => setWrapEdges(e.target.checked)} /> Wrap Edges</label>
             </div>
 
             {/* Pattern */}
-            <div style={{ display: 'flex', flexDirection: 'column', marginBottom: '10px', gap: '4px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
               <label style={{ fontWeight: 600 }}>Pattern:</label>
               <select
                 value={pattern}
-                onChange={(e) => { setPattern(e.target.value); applyPattern(e.target.value); }}
+                onChange={(e) => applyPattern(e.target.value)}
                 style={{
                   width: '100%',
                   padding: '6px 8px',
@@ -371,43 +364,34 @@ export default function App(): JSX.Element {
               </select>
             </div>
 
-            {/* Life-like rules */}
-            <div>
-              <div style={{ marginBottom: '4px', fontWeight: 600 }}>Survive counts:</div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'nowrap', gap: '4px' }}>
+            {/* Life-like Rules */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              <div>Survive counts:</div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
                 {Array.from({ length: 9 }, (_, n) => (
-                  <label key={`s${n}`} style={{ display: 'flex', alignItems: 'center', fontSize: '0.95rem', fontWeight: 600 }}>
-                    <input
-                      type="checkbox"
-                      checked={surviveCounts.includes(n)}
-                      onChange={(e) => {
-                        const checked = e.target.checked;
-                        setSurviveCounts(prev => checked ? [...prev, n] : prev.filter(x => x !== n));
-                      }}
-                    />
+                  <label key={`s${n}`} style={{ display: 'flex', alignItems: 'center', fontSize: '0.95rem' }}>
+                    <input type="checkbox" checked={surviveCounts.includes(n)} onChange={e => {
+                      const checked = e.target.checked;
+                      setSurviveCounts(prev => checked ? [...prev, n] : prev.filter(x => x !== n));
+                    }} />
                     <span style={{ marginLeft: '3px' }}>{n}</span>
                   </label>
                 ))}
               </div>
-
-              <div style={{ marginTop: '6px', marginBottom: '4px', fontWeight: 600 }}>Birth counts:</div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'nowrap', gap: '4px' }}>
+              <div>Birth counts:</div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
                 {Array.from({ length: 9 }, (_, n) => (
-                  <label key={`b${n}`} style={{ display: 'flex', alignItems: 'center', fontSize: '0.95rem', fontWeight: 600 }}>
-                    <input
-                      type="checkbox"
-                      checked={birthCounts.includes(n)}
-                      onChange={(e) => {
-                        const checked = e.target.checked;
-                        setBirthCounts(prev => checked ? [...prev, n] : prev.filter(x => x !== n));
-                      }}
-                    />
+                  <label key={`b${n}`} style={{ display: 'flex', alignItems: 'center', fontSize: '0.95rem' }}>
+                    <input type="checkbox" checked={birthCounts.includes(n)} onChange={e => {
+                      const checked = e.target.checked;
+                      setBirthCounts(prev => checked ? [...prev, n] : prev.filter(x => x !== n));
+                    }} />
                     <span style={{ marginLeft: '3px' }}>{n}</span>
                   </label>
                 ))}
               </div>
             </div>
-          </>
+          </div>
         )}
       </div>
 
