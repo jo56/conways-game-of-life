@@ -355,7 +355,7 @@ export default function App(): JSX.Element {
                   border: '1px solid #374151',
                   background: 'rgba(31, 41, 55, 0.95)',
                   color: '#fff',
-                  fontWeight: 600,
+                  fontWeight: 400,
                   cursor: 'pointer',
                   outline: 'none',
                   fontSize: '0.95rem'
