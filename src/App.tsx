@@ -418,39 +418,59 @@ export default function App(): JSX.Element {
             </div>
 
             {/* Life-like rules */}
-            <div style={{ marginBottom: '8px' }}>
-              <div style={{ marginBottom: '4px', fontWeight: 500 }}>Survive counts:</div>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
-                {Array.from({ length: 9 }, (_, n) => (
-                  <label key={`s${n}`} style={{ fontSize: '0.8rem' }}>
-                    <input
-                      type="checkbox"
-                      checked={surviveCounts.includes(n)}
-                      onChange={(e) => {
-                        const checked = e.target.checked;
-                        setSurviveCounts(prev => checked ? [...prev, n] : prev.filter(x => x !== n));
-                      }}
-                    /> {n}
-                  </label>
-                ))}
-              </div>
+{/* Life-like rules */}
+<div style={{ marginBottom: '8px' }}>
+  <div style={{ marginBottom: '4px', fontWeight: 500 }}>Survive counts:</div>
+  <div
+    style={{
+      display: 'flex',
+      flexWrap: 'nowrap',
+      justifyContent: 'space-between',
+      gap: '6px'
+    }}
+  >
+    {Array.from({ length: 9 }, (_, n) => (
+      <label key={`s${n}`} style={{ display: 'flex', alignItems: 'center', fontSize: '0.85rem' }}>
+        <input
+          type="checkbox"
+          checked={surviveCounts.includes(n)}
+          onChange={(e) => {
+            const checked = e.target.checked;
+            setSurviveCounts(prev => checked ? [...prev, n] : prev.filter(x => x !== n));
+          }}
+        />
+        <span style={{ marginLeft: '3px' }}>{n}</span>
+      </label>
+    ))}
+  </div>
 
-              <div style={{ marginTop: '6px', marginBottom: '4px', fontWeight: 500 }}>Birth counts:</div>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
-                {Array.from({ length: 9 }, (_, n) => (
-                  <label key={`b${n}`} style={{ fontSize: '0.8rem' }}>
-                    <input
-                      type="checkbox"
-                      checked={birthCounts.includes(n)}
-                      onChange={(e) => {
-                        const checked = e.target.checked;
-                        setBirthCounts(prev => checked ? [...prev, n] : prev.filter(x => x !== n));
-                      }}
-                    /> {n}
-                  </label>
-                ))}
-              </div>
-            </div>
+  <div style={{ marginTop: '6px', marginBottom: '4px', fontWeight: 500 }}>Birth counts:</div>
+  <div
+    style={{
+      display: 'flex',
+      flexWrap: 'nowrap',
+      justifyContent: 'space-between',
+      gap: '6px'
+    }}
+  >
+    {Array.from({ length: 9 }, (_, n) => (
+      <label key={`b${n}`} style={{ display: 'flex', alignItems: 'center', fontSize: '0.85rem' }}>
+        <input
+          type="checkbox"
+          checked={birthCounts.includes(n)}
+          onChange={(e) => {
+            const checked = e.target.checked;
+            setBirthCounts(prev => checked ? [...prev, n] : prev.filter(x => x !== n));
+          }}
+        />
+        <span style={{ marginLeft: '3px' }}>{n}</span>
+      </label>
+    ))}
+  </div>
+</div>
+
+
+
           </>
         )}
 
