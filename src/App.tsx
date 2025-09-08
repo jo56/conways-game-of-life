@@ -16,7 +16,7 @@ export default function App(): JSX.Element {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const rafRef = useRef<number | null>(null);
   const runningRef = useRef(false);
-  const speedRef = useRef(8);
+  const speedRef = useRef(1);
   const isMouseDown = useRef(false);
   const drawMode = useRef(1);
 
@@ -26,7 +26,7 @@ export default function App(): JSX.Element {
   const [cols, setCols] = useState(30);
   const [grid, setGrid] = useState<Uint8Array[]>(() => createEmptyGrid(rows, cols));
   const [running, setRunning] = useState(false);
-  const [speed, setSpeed] = useState(8);
+  const [speed, setSpeed] = useState(1);
 
   // Additional parameters
   const [fillProb, setFillProb] = useState(0.25);
@@ -39,6 +39,12 @@ export default function App(): JSX.Element {
   const [pattern, setPattern] = useState('');
 
   speedRef.current = speed;
+
+  // Refs to hold live values of rules
+  const surviveRef = useRef(surviveCounts);
+  const birthRef = useRef(birthCounts);
+  useEffect(() => { surviveRef.current = surviveCounts; }, [surviveCounts]);
+  useEffect(() => { birthRef.current = birthCounts; }, [birthCounts]);
 
   // Panel drag
   const panelRef = useRef<HTMLDivElement | null>(null);
@@ -71,11 +77,13 @@ export default function App(): JSX.Element {
     for (let r = 0; r < g.length; r++) {
       for (let c = 0; c < g[0].length; c++) {
         const n = countNeighbors(g, r, c);
-        newG[r][c] = g[r][c] ? (surviveCounts.includes(n) ? 1 : 0) : (birthCounts.includes(n) ? 1 : 0);
+        newG[r][c] = g[r][c]
+          ? (surviveRef.current.includes(n) ? 1 : 0)
+          : (birthRef.current.includes(n) ? 1 : 0);
       }
     }
     return newG;
-  }, [wrapEdges, surviveCounts, birthCounts]);
+  }, [wrapEdges]);
 
   const draw = useCallback(() => {
     const canvas = canvasRef.current;
@@ -120,7 +128,7 @@ export default function App(): JSX.Element {
     let lastTime = performance.now();
     const loop = (time: number) => {
       if (!runningRef.current) return;
-      const interval = 1000 / Math.max(1, speedRef.current);
+      const interval = 1000 / Math.max(0.25, speedRef.current);
       if (time - lastTime >= interval) {
         setGrid((g) => step(g));
         lastTime = time;
@@ -174,8 +182,8 @@ export default function App(): JSX.Element {
   // --- Randomize & Clear ---
   const randomize = () => setGrid(() => {
     const ng = createEmptyGrid(rows, cols);
-    for (let r = 0; r < ng.length; r++) 
-      for (let c = 0; c < ng[0].length; c++) 
+    for (let r = 0; r < ng.length; r++)
+      for (let c = 0; c < ng[0].length; c++)
         ng[r][c] = Math.random() < fillProb ? 1 : 0;
     return ng;
   });
@@ -218,7 +226,6 @@ export default function App(): JSX.Element {
   };
 
   const patternOptions = ['Glider', 'Blinker', 'Block'];
-
   const applyPattern = (pat: string) => {
     const centerR = Math.floor(rows / 2);
     const centerC = Math.floor(cols / 2);
@@ -260,30 +267,27 @@ export default function App(): JSX.Element {
         </div>
 
         {/* Sliders */}
-{[
-  ['Speed', speed, 0.25, 10, setSpeed, ' gen/s'],   // <-- min=0, max=2
-  ['Cell size', cellSize, 6, 40, setCellSize, ' px'],
-  ['Rows', rows, 5, 300, handleRowsChange, ''],
-  ['Cols', cols, 5, 300, handleColsChange, ''],
-  ['Fill prob', fillProb, 0, 1, setFillProb, '']
-].map(([label, value, min, max, setter, unit], idx) => (
-  <div key={idx} style={{ display: 'flex', alignItems: 'center', marginBottom: '8px' }}>
-    <label style={{ width: '90px', fontWeight: 500 }}>{label}:</label>
-    <input
-      type="range"
-      min={min as number}
-      max={max as number}
-      step={label === 'Speed' ? 0.25 : label === 'Fill prob' ? 0.01 : 1}  // <-- fractional step for speed
-      value={value as number}
-      onChange={(e) => setter(Number(e.target.value))}
-      style={{ flex: 1, marginRight: '6px', height: '6px', borderRadius: '4px' }}
-    />
-    <div style={{ width: '40px', textAlign: 'right' }}>
-      {unit === '' ? (value as number) : (label === 'Fill prob' ? `${Math.round(Number(value) * 100)}%` : `${value}${unit}`)}
-    </div>
-  </div>
-))}
-
+        {[
+          ['Speed', speed, 0, 5, setSpeed, ' gen/s'],
+          ['Cell size', cellSize, 6, 40, setCellSize, ' px'],
+          ['Rows', rows, 5, 300, handleRowsChange, ''],
+          ['Cols', cols, 5, 300, handleColsChange, ''],
+          ['Fill prob', fillProb, 0, 1, setFillProb, '']
+        ].map(([label, value, min, max, setter, unit], idx) => (
+          <div key={idx} style={{ display: 'flex', alignItems: 'center', marginBottom: '8px' }}>
+            <label style={{ width: '90px', fontWeight: 500 }}>{label}:</label>
+            <input
+              type="range"
+              min={min as number}
+              max={max as number}
+              step={label === 'Speed' ? 0.25 : label === 'Fill prob' ? 0.01 : 1}
+              value={value as number}
+              onChange={(e) => setter(Number(e.target.value))}
+              style={{ flex: 1, marginRight: '6px', height: '6px', borderRadius: '4px' }}
+            />
+            <div style={{ width: '40px', textAlign: 'right' }}>{label === 'Fill prob' ? `${Math.round(Number(value) * 100)}%` : `${value}${unit}`}</div>
+          </div>
+        ))}
 
         {/* Color pickers */}
         <div style={{ marginBottom: '8px', display: 'flex', justifyContent: 'space-between' }}>
@@ -300,65 +304,62 @@ export default function App(): JSX.Element {
         </div>
 
         {/* Pattern selector */}
-<div style={{ marginBottom: '8px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
-  <label style={{ fontWeight: 500 }}>Pattern:</label>
-  <select
-    value={pattern}
-    onChange={(e) => { setPattern(e.target.value); applyPattern(e.target.value); }}
-    style={{
-      width: '100%',
-      padding: '6px 8px',
-      borderRadius: '6px',
-      border: '1px solid #374151',
-      background: 'rgba(31, 41, 55, 0.95)',
-      color: '#fff',
-      fontWeight: 500,
-      cursor: 'pointer',
-      outline: 'none',
-    }}
-  >
-    <option value="">Select Pattern</option>
-    {patternOptions.map(p => (
-      <option key={p} value={p}>{p}</option>
-    ))}
-  </select>
-</div>
-
+        <div style={{ marginBottom: '8px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+          <label style={{ fontWeight: 500 }}>Pattern:</label>
+          <select
+            value={pattern}
+            onChange={(e) => { setPattern(e.target.value); applyPattern(e.target.value); }}
+            style={{
+              width: '100%',
+              padding: '6px 8px',
+              borderRadius: '6px',
+              border: '1px solid #374151',
+              background: 'rgba(31, 41, 55, 0.95)',
+              color: '#fff',
+              fontWeight: 500,
+              cursor: 'pointer',
+              outline: 'none',
+            }}
+          >
+            <option value="">Select Pattern</option>
+            {patternOptions.map(p => <option key={p} value={p}>{p}</option>)}
+          </select>
+        </div>
 
         {/* Life-like rules */}
-<div style={{ marginBottom: '8px' }}>
-  <div style={{ marginBottom: '4px', fontWeight: 500 }}>Survive counts:</div>
-  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
-    {Array.from({ length: 9 }, (_, n) => (
-      <label key={`s${n}`} style={{ fontSize: '0.8rem' }}>
-        <input
-          type="checkbox"
-          checked={surviveCounts.includes(n)}
-          onChange={(e) => {
-            const checked = e.target.checked;
-            setSurviveCounts(prev => checked ? [...prev, n] : prev.filter(x => x !== n));
-          }}
-        /> {n}
-      </label>
-    ))}
-  </div>
+        <div style={{ marginBottom: '8px' }}>
+          <div style={{ marginBottom: '4px', fontWeight: 500 }}>Survive counts:</div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+            {Array.from({ length: 9 }, (_, n) => (
+              <label key={`s${n}`} style={{ fontSize: '0.8rem' }}>
+                <input
+                  type="checkbox"
+                  checked={surviveCounts.includes(n)}
+                  onChange={(e) => {
+                    const checked = e.target.checked;
+                    setSurviveCounts(prev => checked ? [...prev, n] : prev.filter(x => x !== n));
+                  }}
+                /> {n}
+              </label>
+            ))}
+          </div>
 
-  <div style={{ marginTop: '6px', marginBottom: '4px', fontWeight: 500 }}>Birth counts:</div>
-  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
-    {Array.from({ length: 9 }, (_, n) => (
-      <label key={`b${n}`} style={{ fontSize: '0.8rem' }}>
-        <input
-          type="checkbox"
-          checked={birthCounts.includes(n)}
-          onChange={(e) => {
-            const checked = e.target.checked;
-            setBirthCounts(prev => checked ? [...prev, n] : prev.filter(x => x !== n));
-          }}
-        /> {n}
-      </label>
-    ))}
-  </div>
-</div>
+          <div style={{ marginTop: '6px', marginBottom: '4px', fontWeight: 500 }}>Birth counts:</div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+            {Array.from({ length: 9 }, (_, n) => (
+              <label key={`b${n}`} style={{ fontSize: '0.8rem' }}>
+                <input
+                  type="checkbox"
+                  checked={birthCounts.includes(n)}
+                  onChange={(e) => {
+                    const checked = e.target.checked;
+                    setBirthCounts(prev => checked ? [...prev, n] : prev.filter(x => x !== n));
+                  }}
+                /> {n}
+              </label>
+            ))}
+          </div>
+        </div>
 
       </div>
 
