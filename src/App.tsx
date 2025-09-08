@@ -14,9 +14,10 @@ function cloneGrid(grid: Uint8Array[]): Uint8Array[] {
 
 export default function App(): JSX.Element {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const canvasContainerRef = useRef<HTMLDivElement | null>(null);
+  const panelRef = useRef<HTMLDivElement | null>(null);
   const rafRef = useRef<number | null>(null);
   const runningRef = useRef(false);
-  const speedRef = useRef(1);
   const isMouseDown = useRef(false);
   const drawMode = useRef(1);
 
@@ -26,7 +27,7 @@ export default function App(): JSX.Element {
   const [cols, setCols] = useState(30);
   const [grid, setGrid] = useState<Uint8Array[]>(() => createEmptyGrid(rows, cols));
   const [running, setRunning] = useState(false);
-  const [speed, setSpeed] = useState(1);
+  const [speed, setSpeed] = useState(2);
 
   // Advanced settings
   const [fillProb, setFillProb] = useState(0.25);
@@ -39,19 +40,33 @@ export default function App(): JSX.Element {
   const [pattern, setPattern] = useState('');
   const [showAdvanced, setShowAdvanced] = useState(false);
 
-  speedRef.current = speed;
   const surviveRef = useRef(surviveCounts);
   const birthRef = useRef(birthCounts);
   useEffect(() => { surviveRef.current = surviveCounts; }, [surviveCounts]);
   useEffect(() => { birthRef.current = birthCounts; }, [birthCounts]);
 
   // Panel drag
-  const panelRef = useRef<HTMLDivElement | null>(null);
   const isDragging = useRef(false);
   const dragOffset = useRef({ x: 0, y: 0 });
-  const [panelPos, setPanelPos] = useState({ x: 800, y: 20 }); // start away from grid
+  const [panelPos, setPanelPos] = useState({ x: 20, y: 20 });
 
-  // Core logic
+  // Responsive
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const handleResize = () => {
+      const mobile = window.innerWidth < 800;
+      setIsMobile(mobile);
+      if (!mobile && canvasContainerRef.current) {
+        const rect = canvasContainerRef.current.getBoundingClientRect();
+        setPanelPos({ x: rect.right + 10, y: rect.top });
+      }
+    };
+    window.addEventListener('resize', handleResize);
+    handleResize();
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  // Neighbor counting
   const countNeighbors = (g: Uint8Array[], r: number, c: number) => {
     const R = g.length, C = g[0].length;
     let sum = 0;
@@ -70,14 +85,13 @@ export default function App(): JSX.Element {
 
   const step = useCallback((g: Uint8Array[]) => {
     const newG = createEmptyGrid(g.length, g[0].length);
-    for (let r = 0; r < g.length; r++) {
+    for (let r = 0; r < g.length; r++)
       for (let c = 0; c < g[0].length; c++) {
         const n = countNeighbors(g, r, c);
         newG[r][c] = g[r][c]
           ? (surviveRef.current.includes(n) ? 1 : 0)
           : (birthRef.current.includes(n) ? 1 : 0);
       }
-    }
     return newG;
   }, [wrapEdges]);
 
@@ -122,7 +136,7 @@ export default function App(): JSX.Element {
     let lastTime = performance.now();
     const loop = (time: number) => {
       if (!runningRef.current) return;
-      const interval = 1000 / Math.max(0.25, speedRef.current);
+      const interval = 1000 / Math.max(0.25, speed);
       if (time - lastTime >= interval) {
         setGrid(g => step(g));
         lastTime = time;
@@ -181,6 +195,7 @@ export default function App(): JSX.Element {
   const stepOnce = () => setGrid(g => step(g));
 
   const handleHeaderMouseDown = (e: React.MouseEvent) => {
+    if (isMobile) return; // disable drag on mobile
     isDragging.current = true;
     dragOffset.current = { x: e.clientX - panelPos.x, y: e.clientY - panelPos.y };
   };
@@ -224,28 +239,42 @@ export default function App(): JSX.Element {
     if (pat === 'Blinker') [[0,0],[0,1],[0,2]].forEach(([r,c]) => ng[centerR+r][centerC+c] = 1);
     if (pat === 'Block') [[0,0],[0,1],[1,0],[1,1]].forEach(([r,c]) => ng[centerR+r][centerC+c] = 1);
     setGrid(ng);
-    setPattern(pat);
   };
 
   return (
-    <div style={{ position: 'relative', width: '100%', height: '100vh', overflow: 'auto', background: '#111827' }}>
+    <div style={{
+      width: '100%',
+      height: '100vh',
+      background: '#111827',
+      display: 'flex',
+      flexDirection: isMobile ? 'column' : 'row',
+      alignItems: 'flex-start'
+    }}>
+      {/* Canvas container */}
+      <div ref={canvasContainerRef} style={{ padding: '10px', display: 'inline-block' }}>
+        <canvas
+          ref={canvasRef}
+          onMouseDown={handleMouseDown}
+          onMouseUp={handleMouseUp}
+          onMouseMove={handleMouseMove}
+          style={{ display: 'block', cursor: 'crosshair', background: deadColor }}
+        />
+      </div>
+
       {/* Settings Panel */}
       <div
         ref={panelRef}
         style={{
-          position: 'fixed',
-          top: panelPos.y,
-          left: panelPos.x,
+          position: isMobile ? 'relative' : 'fixed',
+          top: isMobile ? undefined : panelPos.y,
+          left: isMobile ? undefined : panelPos.x,
+          marginTop: isMobile ? '10px' : undefined,
           background: 'rgba(17,24,39,0.95)',
           padding: '12px',
           borderRadius: '10px',
-          minWidth: '250px',
           maxWidth: '430px',
           zIndex: 1000,
-          boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '12px'
+          boxShadow: '0 4px 12px rgba(0,0,0,0.3)'
         }}
       >
         {/* Header */}
@@ -253,30 +282,32 @@ export default function App(): JSX.Element {
           onMouseDown={handleHeaderMouseDown}
           style={{
             textAlign: 'center',
+            marginBottom: '12px',
             fontWeight: 'bold',
-            cursor: 'move',
+            cursor: isMobile ? 'default' : 'move',
             userSelect: 'none',
             padding: '6px 0',
             background: 'rgba(55,65,81,0.8)',
             borderRadius: '6px',
             fontSize: '1rem'
           }}
-        >Conway's Game of Life</div>
+        >
+          Conway's Game of Life
+        </div>
 
         {/* Buttons */}
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+        <div style={{ display: 'flex', gap: '6px', marginBottom: '12px', flexWrap: 'wrap' }}>
           {[
             { label: running ? 'Stop' : 'Start', onClick: toggleRunning, bg: running ? '#06b6d4' : '#374151' },
             { label: 'Step', onClick: stepOnce, bg: '#374151' },
             { label: 'Random', onClick: randomize, bg: '#374151' },
             { label: 'Clear', onClick: clear, bg: '#374151' },
-            { label: 'Adv.', onClick: () => setShowAdvanced(prev => !prev), bg: '#374151' }
+            { label: 'Adv.', onClick: () => setShowAdvanced(prev => !prev), bg: '#374151' },
           ].map(({ label, onClick, bg }) => (
             <button
               key={label}
               onClick={onClick}
               style={{
-                flex: '1 1 100px',
                 padding: '6px 12px',
                 borderRadius: '6px',
                 background: bg,
@@ -284,7 +315,8 @@ export default function App(): JSX.Element {
                 border: 'none',
                 cursor: 'pointer',
                 fontWeight: 'normal',
-                fontSize: '0.95rem'
+                fontSize: '0.95rem',
+                whiteSpace: 'nowrap',
               }}
             >
               {label}
@@ -293,117 +325,116 @@ export default function App(): JSX.Element {
         </div>
 
         {/* Sliders */}
-        {[
-          ['Speed', speed, 0, 5, setSpeed, ' gen/s'],
+        {[['Speed', speed, 0, 5, setSpeed, ' gen/s'],
           ['Cell size', cellSize, 6, 40, setCellSize, ' px'],
           ['Rows', rows, 5, 300, handleRowsChange, ''],
-          ['Cols', cols, 5, 300, handleColsChange, '']
-        ].map(([label, value, min, max, setter, unit], idx) => (
-          <div key={idx} style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '8px' }}>
-            <label style={{ minWidth: '90px', fontWeight: 600 }}>{label}:</label>
-            <input
-              type="range"
-              min={min as number}
-              max={max as number}
-              step={label === 'Speed' ? 0.25 : 1}
-              value={value as number}
-              onChange={(e) => setter(Number(e.target.value))}
-              style={{ flex: '1 1 auto', height: '8px', borderRadius: '4px' }}
-            />
-            <span style={{ minWidth: '50px', textAlign: 'right', fontSize: '0.95rem' }}>
-              {`${value}${unit}`}
-            </span>
+          ['Cols', cols, 5, 300, handleColsChange, '']].map(([label, value, min, max, setter, unit], idx) => (
+          <div key={idx} style={{ display: 'flex', alignItems: 'center', marginBottom: '10px' }}>
+            <label style={{ width: '100px', fontWeight: 600 }}>{label}:</label>
+            <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <input
+                type="range"
+                min={min as number}
+                max={max as number}
+                step={label === 'Speed' ? 0.25 : 1}
+                value={value as number}
+                onChange={(e) => setter(Number(e.target.value))}
+                style={{ flex: 1, height: '8px', borderRadius: '4px' }}
+              />
+              <span style={{ minWidth: '50px', textAlign: 'right', fontSize: '0.95rem' }}>
+                {`${value}${unit}`}
+              </span>
+            </div>
           </div>
         ))}
 
         {/* Advanced Settings */}
-        {showAdvanced && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            {/* Fill Prob */}
-            <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '8px' }}>
-              <label style={{ minWidth: '90px', fontWeight: 600 }}>Fill prob:</label>
-              <input type="range" min={0} max={1} step={0.01} value={fillProb} onChange={e => setFillProb(Number(e.target.value))} style={{ flex: '1 1 auto', height: '8px', borderRadius: '4px' }} />
-              <span style={{ minWidth: '40px', textAlign: 'right', fontSize: '0.95rem' }}>{`${Math.round(fillProb * 100)}%`}</span>
-            </div>
+        {/* Advanced Settings */}
+{showAdvanced && (
+  <>
+    {/* Fill prob */}
+    <div style={{ display: 'flex', alignItems: 'center', marginBottom: '10px' }}>
+      <label style={{ width: '100px', fontWeight: 600 }}>Fill prob:</label>
+      <input
+        type="range"
+        min={0}
+        max={1}
+        step={0.01}
+        value={fillProb}
+        onChange={(e) => setFillProb(Number(e.target.value))}
+        style={{ flex: 1, marginRight: '8px', height: '8px', borderRadius: '4px' }}
+      />
+      <div style={{ width: '40px', textAlign: 'right', fontSize: '0.95rem' }}>
+        {`${Math.round(fillProb * 100)}%`}
+      </div>
+    </div>
 
-            {/* Colors */}
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center' }}>
-              <label style={{ fontWeight: 600 }}>Alive:</label>
-              <input type="color" value={aliveColor} onChange={e => setAliveColor(e.target.value)} />
-              <label style={{ fontWeight: 600 }}>Dead:</label>
-              <input type="color" value={deadColor} onChange={e => setDeadColor(e.target.value)} />
-            </div>
+    {/* Colors */}
+    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px', gap: '8px' }}>
+      <label style={{ fontWeight: 600 }}>Alive:</label>
+      <input type="color" value={aliveColor} onChange={e => setAliveColor(e.target.value)} />
+      <label style={{ fontWeight: 600 }}>Dead:</label>
+      <input type="color" value={deadColor} onChange={e => setDeadColor(e.target.value)} />
+    </div>
 
-            {/* Toggles */}
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', fontWeight: 600 }}>
-              <label><input type="checkbox" checked={showGrid} onChange={e => setShowGrid(e.target.checked)} /> Show Grid</label>
-              <label><input type="checkbox" checked={wrapEdges} onChange={e => setWrapEdges(e.target.checked)} /> Wrap Edges</label>
-            </div>
+    {/* Toggles */}
+    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px', gap: '8px', fontWeight: 600 }}>
+      <label><input type="checkbox" checked={showGrid} onChange={e => setShowGrid(e.target.checked)} /> Show Grid</label>
+      <label><input type="checkbox" checked={wrapEdges} onChange={e => setWrapEdges(e.target.checked)} /> Wrap Edges</label>
+    </div>
 
-            {/* Pattern */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-              <label style={{ fontWeight: 600 }}>Pattern:</label>
-              <select
-                value={pattern}
-                onChange={(e) => applyPattern(e.target.value)}
-                style={{
-                  width: '100%',
-                  padding: '6px 8px',
-                  borderRadius: '6px',
-                  border: '1px solid #374151',
-                  background: 'rgba(31,41,55,0.95)',
-                  color: '#fff',
-                  fontWeight: 400,
-                  cursor: 'pointer',
-                  outline: 'none',
-                  fontSize: '0.95rem'
-                }}
-              >
-                <option value="">Select Pattern</option>
-                {patternOptions.map(p => <option key={p} value={p}>{p}</option>)}
-              </select>
-            </div>
+    {/* Pattern */}
+    <div style={{ display: 'flex', flexDirection: 'column', marginBottom: '10px', gap: '4px' }}>
+      <label style={{ fontWeight: 600 }}>Pattern:</label>
+      <select
+        value={pattern}
+        onChange={(e) => { setPattern(e.target.value); applyPattern(e.target.value); }}
+        style={{ padding: '4px 8px', borderRadius: '6px', background: '#374151', color: '#fff', border: 'none' }}
+      >
+        <option value="">None</option>
+        {patternOptions.map(p => <option key={p} value={p}>{p}</option>)}
+      </select>
+    </div>
 
-            {/* Life-like Rules */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-              <div>Survive counts:</div>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
-                {Array.from({ length: 9 }, (_, n) => (
-                  <label key={`s${n}`} style={{ display: 'flex', alignItems: 'center', fontSize: '0.95rem' }}>
-                    <input type="checkbox" checked={surviveCounts.includes(n)} onChange={e => {
-                      const checked = e.target.checked;
-                      setSurviveCounts(prev => checked ? [...prev, n] : prev.filter(x => x !== n));
-                    }} />
-                    <span style={{ marginLeft: '3px' }}>{n}</span>
-                  </label>
-                ))}
-              </div>
-              <div>Birth counts:</div>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
-                {Array.from({ length: 9 }, (_, n) => (
-                  <label key={`b${n}`} style={{ display: 'flex', alignItems: 'center', fontSize: '0.95rem' }}>
-                    <input type="checkbox" checked={birthCounts.includes(n)} onChange={e => {
-                      const checked = e.target.checked;
-                      setBirthCounts(prev => checked ? [...prev, n] : prev.filter(x => x !== n));
-                    }} />
-                    <span style={{ marginLeft: '3px' }}>{n}</span>
-                  </label>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
+    {/* Survive & Birth checkboxes */}
+    <div style={{ marginTop: '8px' }}>
+      <div style={{ marginBottom: '4px', fontWeight: 600 }}>Survive counts:</div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: '4px' }}>
+        {Array.from({ length: 9 }, (_, n) => (
+          <label key={`s${n}`} style={{ display: 'flex', alignItems: 'center', fontSize: '0.95rem', fontWeight: 600 }}>
+            <input
+              type="checkbox"
+              checked={surviveCounts.includes(n)}
+              onChange={(e) => {
+                const checked = e.target.checked;
+                setSurviveCounts(prev => checked ? [...prev, n] : prev.filter(x => x !== n));
+              }}
+            />
+            <span style={{ marginLeft: '3px' }}>{n}</span>
+          </label>
+        ))}
       </div>
 
-      {/* Canvas */}
-      <div style={{ padding: '10px' }}>
-        <canvas
-          ref={canvasRef}
-          onMouseDown={handleMouseDown}
-          onMouseUp={handleMouseUp}
-          onMouseMove={handleMouseMove}
-          style={{ display: 'block', cursor: 'crosshair', background: deadColor }}
-        />
+      <div style={{ marginTop: '6px', marginBottom: '4px', fontWeight: 600 }}>Birth counts:</div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: '4px' }}>
+        {Array.from({ length: 9 }, (_, n) => (
+          <label key={`b${n}`} style={{ display: 'flex', alignItems: 'center', fontSize: '0.95rem', fontWeight: 600 }}>
+            <input
+              type="checkbox"
+              checked={birthCounts.includes(n)}
+              onChange={(e) => {
+                const checked = e.target.checked;
+                setBirthCounts(prev => checked ? [...prev, n] : prev.filter(x => x !== n));
+              }}
+            />
+            <span style={{ marginLeft: '3px' }}>{n}</span>
+          </label>
+        ))}
+      </div>
+    </div>
+  </>
+)}
+
       </div>
     </div>
   );
