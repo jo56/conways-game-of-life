@@ -21,24 +21,41 @@ export default function App(): JSX.Element {
   const isMouseDown = useRef(false);
   const drawMode = useRef(1);
 
+  // Defaults
+  const defaults = {
+    cellSize: 20,
+    rows: 20,
+    cols: 30,
+    speed: 2,
+    fillProb: 0.25,
+    showGrid: true,
+    aliveColor: '#06b6d4',
+    deadColor: '#051025',
+    wrapEdges: true,
+    surviveCounts: [2, 3],
+    birthCounts: [3],
+    pattern: '',
+    showAdvanced: false
+  };
+
   // Core state
-  const [cellSize, setCellSize] = useState(20);
-  const [rows, setRows] = useState(20);
-  const [cols, setCols] = useState(30);
-  const [grid, setGrid] = useState<Uint8Array[]>(() => createEmptyGrid(rows, cols));
+  const [cellSize, setCellSize] = useState(defaults.cellSize);
+  const [rows, setRows] = useState(defaults.rows);
+  const [cols, setCols] = useState(defaults.cols);
+  const [grid, setGrid] = useState<Uint8Array[]>(() => createEmptyGrid(defaults.rows, defaults.cols));
   const [running, setRunning] = useState(false);
-  const [speed, setSpeed] = useState(2);
+  const [speed, setSpeed] = useState(defaults.speed);
 
   // Advanced settings
-  const [fillProb, setFillProb] = useState(0.25);
-  const [showGrid, setShowGrid] = useState(true);
-  const [aliveColor, setAliveColor] = useState('#06b6d4');
-  const [deadColor, setDeadColor] = useState('#051025');
-  const [wrapEdges, setWrapEdges] = useState(true);
-  const [surviveCounts, setSurviveCounts] = useState([2, 3]);
-  const [birthCounts, setBirthCounts] = useState([3]);
-  const [pattern, setPattern] = useState('');
-  const [showAdvanced, setShowAdvanced] = useState(false);
+  const [fillProb, setFillProb] = useState(defaults.fillProb);
+  const [showGrid, setShowGrid] = useState(defaults.showGrid);
+  const [aliveColor, setAliveColor] = useState(defaults.aliveColor);
+  const [deadColor, setDeadColor] = useState(defaults.deadColor);
+  const [wrapEdges, setWrapEdges] = useState(defaults.wrapEdges);
+  const [surviveCounts, setSurviveCounts] = useState(defaults.surviveCounts);
+  const [birthCounts, setBirthCounts] = useState(defaults.birthCounts);
+  const [pattern, setPattern] = useState(defaults.pattern);
+  const [showAdvanced, setShowAdvanced] = useState(defaults.showAdvanced);
 
   const surviveRef = useRef(surviveCounts);
   const birthRef = useRef(birthCounts);
@@ -70,7 +87,7 @@ export default function App(): JSX.Element {
   const countNeighbors = (g: Uint8Array[], r: number, c: number) => {
     const R = g.length, C = g[0].length;
     let sum = 0;
-    for (let dr = -1; dr <= 1; dr++) {
+    for (let dr = -1; dr <= 1; dr++)
       for (let dc = -1; dc <= 1; dc++) {
         if (dr === 0 && dc === 0) continue;
         let nr = r + dr, nc = c + dc;
@@ -79,7 +96,6 @@ export default function App(): JSX.Element {
         } else if (nr < 0 || nr >= R || nc < 0 || nc >= C) continue;
         sum += g[nr][nc];
       }
-    }
     return sum;
   };
 
@@ -191,11 +207,27 @@ export default function App(): JSX.Element {
         ng[r][c] = Math.random() < fillProb ? 1 : 0;
     return ng;
   });
-  const clear = () => setGrid(() => createEmptyGrid(rows, cols));
+
+  const clear = () => {
+    setGrid(createEmptyGrid(defaults.rows, defaults.cols));
+    setCellSize(defaults.cellSize);
+    setRows(defaults.rows);
+    setCols(defaults.cols);
+    setSpeed(defaults.speed);
+    setFillProb(defaults.fillProb);
+    setShowGrid(defaults.showGrid);
+    setAliveColor(defaults.aliveColor);
+    setDeadColor(defaults.deadColor);
+    setWrapEdges(defaults.wrapEdges);
+    setSurviveCounts(defaults.surviveCounts);
+    setBirthCounts(defaults.birthCounts);
+    setPattern(defaults.pattern);
+  };
+
   const stepOnce = () => setGrid(g => step(g));
 
   const handleHeaderMouseDown = (e: React.MouseEvent) => {
-    if (isMobile) return; // disable drag on mobile
+    if (isMobile) return;
     isDragging.current = true;
     dragOffset.current = { x: e.clientX - panelPos.x, y: e.clientY - panelPos.y };
   };
@@ -250,7 +282,6 @@ export default function App(): JSX.Element {
       flexDirection: isMobile ? 'column' : 'row',
       alignItems: 'flex-start'
     }}>
-      {/* Canvas container */}
       <div ref={canvasContainerRef} style={{ padding: '10px', display: 'inline-block' }}>
         <canvas
           ref={canvasRef}
@@ -261,7 +292,6 @@ export default function App(): JSX.Element {
         />
       </div>
 
-      {/* Settings Panel */}
       <div
         ref={panelRef}
         style={{
@@ -297,7 +327,7 @@ export default function App(): JSX.Element {
 
         {/* Buttons */}
         <div style={{ display: 'flex', gap: '6px', marginBottom: '12px', flexWrap: 'wrap' }}>
-          {[
+          {[ 
             { label: running ? 'Stop' : 'Start', onClick: toggleRunning, bg: running ? '#06b6d4' : '#374151' },
             { label: 'Step', onClick: stepOnce, bg: '#374151' },
             { label: 'Random', onClick: randomize, bg: '#374151' },
@@ -349,91 +379,85 @@ export default function App(): JSX.Element {
         ))}
 
         {/* Advanced Settings */}
-        {/* Advanced Settings */}
-{showAdvanced && (
-  <>
-    {/* Fill prob */}
-    <div style={{ display: 'flex', alignItems: 'center', marginBottom: '10px' }}>
-      <label style={{ width: '100px', fontWeight: 600 }}>Fill prob:</label>
-      <input
-        type="range"
-        min={0}
-        max={1}
-        step={0.01}
-        value={fillProb}
-        onChange={(e) => setFillProb(Number(e.target.value))}
-        style={{ flex: 1, marginRight: '8px', height: '8px', borderRadius: '4px' }}
-      />
-      <div style={{ width: '40px', textAlign: 'right', fontSize: '0.95rem' }}>
-        {`${Math.round(fillProb * 100)}%`}
-      </div>
-    </div>
+        {showAdvanced && (
+          <>
+            <div style={{ display: 'flex', alignItems: 'center', marginBottom: '10px' }}>
+              <label style={{ width: '100px', fontWeight: 600 }}>Fill prob:</label>
+              <input
+                type="range"
+                min={0}
+                max={1}
+                step={0.01}
+                value={fillProb}
+                onChange={(e) => setFillProb(Number(e.target.value))}
+                style={{ flex: 1, marginRight: '8px', height: '8px', borderRadius: '4px' }}
+              />
+              <div style={{ width: '40px', textAlign: 'right', fontSize: '0.95rem' }}>
+                {`${Math.round(fillProb * 100)}%`}
+              </div>
+            </div>
 
-    {/* Colors */}
-    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px', gap: '8px' }}>
-      <label style={{ fontWeight: 600 }}>Alive:</label>
-      <input type="color" value={aliveColor} onChange={e => setAliveColor(e.target.value)} />
-      <label style={{ fontWeight: 600 }}>Dead:</label>
-      <input type="color" value={deadColor} onChange={e => setDeadColor(e.target.value)} />
-    </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px', gap: '8px' }}>
+              <label style={{ fontWeight: 600 }}>Alive:</label>
+              <input type="color" value={aliveColor} onChange={e => setAliveColor(e.target.value)} />
+              <label style={{ fontWeight: 600 }}>Dead:</label>
+              <input type="color" value={deadColor} onChange={e => setDeadColor(e.target.value)} />
+            </div>
 
-    {/* Toggles */}
-    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px', gap: '8px', fontWeight: 600 }}>
-      <label><input type="checkbox" checked={showGrid} onChange={e => setShowGrid(e.target.checked)} /> Show Grid</label>
-      <label><input type="checkbox" checked={wrapEdges} onChange={e => setWrapEdges(e.target.checked)} /> Wrap Edges</label>
-    </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px', gap: '8px', fontWeight: 600 }}>
+              <label><input type="checkbox" checked={showGrid} onChange={e => setShowGrid(e.target.checked)} /> Show Grid</label>
+              <label><input type="checkbox" checked={wrapEdges} onChange={e => setWrapEdges(e.target.checked)} /> Wrap Edges</label>
+            </div>
 
-    {/* Pattern */}
-    <div style={{ display: 'flex', flexDirection: 'column', marginBottom: '10px', gap: '4px' }}>
-      <label style={{ fontWeight: 600 }}>Pattern:</label>
-      <select
-        value={pattern}
-        onChange={(e) => { setPattern(e.target.value); applyPattern(e.target.value); }}
-        style={{ padding: '4px 8px', borderRadius: '6px', background: '#374151', color: '#fff', border: 'none' }}
-      >
-        <option value="">None</option>
-        {patternOptions.map(p => <option key={p} value={p}>{p}</option>)}
-      </select>
-    </div>
+            <div style={{ display: 'flex', flexDirection: 'column', marginBottom: '10px', gap: '4px' }}>
+              <label style={{ fontWeight: 600 }}>Pattern:</label>
+              <select
+                value={pattern}
+                onChange={(e) => { setPattern(e.target.value); applyPattern(e.target.value); }}
+                style={{ padding: '4px 8px', borderRadius: '6px', background: '#374151', color: '#fff', border: 'none' }}
+              >
+                <option value="">None</option>
+                {patternOptions.map(p => <option key={p} value={p}>{p}</option>)}
+              </select>
+            </div>
 
-    {/* Survive & Birth checkboxes */}
-    <div style={{ marginTop: '8px' }}>
-      <div style={{ marginBottom: '4px', fontWeight: 600 }}>Survive counts:</div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: '4px' }}>
-        {Array.from({ length: 9 }, (_, n) => (
-          <label key={`s${n}`} style={{ display: 'flex', alignItems: 'center', fontSize: '0.95rem', fontWeight: 600 }}>
-            <input
-              type="checkbox"
-              checked={surviveCounts.includes(n)}
-              onChange={(e) => {
-                const checked = e.target.checked;
-                setSurviveCounts(prev => checked ? [...prev, n] : prev.filter(x => x !== n));
-              }}
-            />
-            <span style={{ marginLeft: '3px' }}>{n}</span>
-          </label>
-        ))}
-      </div>
+            <div style={{ marginTop: '8px' }}>
+              <div style={{ marginBottom: '4px', fontWeight: 600 }}>Survive counts:</div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: '4px' }}>
+                {Array.from({ length: 9 }, (_, n) => (
+                  <label key={`s${n}`} style={{ display: 'flex', alignItems: 'center', fontSize: '0.95rem', fontWeight: 600 }}>
+                    <input
+                      type="checkbox"
+                      checked={surviveCounts.includes(n)}
+                      onChange={(e) => {
+                        const checked = e.target.checked;
+                        setSurviveCounts(prev => checked ? [...prev, n] : prev.filter(x => x !== n));
+                      }}
+                    />
+                    <span style={{ marginLeft: '3px' }}>{n}</span>
+                  </label>
+                ))}
+              </div>
 
-      <div style={{ marginTop: '6px', marginBottom: '4px', fontWeight: 600 }}>Birth counts:</div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: '4px' }}>
-        {Array.from({ length: 9 }, (_, n) => (
-          <label key={`b${n}`} style={{ display: 'flex', alignItems: 'center', fontSize: '0.95rem', fontWeight: 600 }}>
-            <input
-              type="checkbox"
-              checked={birthCounts.includes(n)}
-              onChange={(e) => {
-                const checked = e.target.checked;
-                setBirthCounts(prev => checked ? [...prev, n] : prev.filter(x => x !== n));
-              }}
-            />
-            <span style={{ marginLeft: '3px' }}>{n}</span>
-          </label>
-        ))}
-      </div>
-    </div>
-  </>
-)}
+              <div style={{ marginTop: '6px', marginBottom: '4px', fontWeight: 600 }}>Birth counts:</div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: '4px' }}>
+                {Array.from({ length: 9 }, (_, n) => (
+                  <label key={`b${n}`} style={{ display: 'flex', alignItems: 'center', fontSize: '0.95rem', fontWeight: 600 }}>
+                    <input
+                      type="checkbox"
+                      checked={birthCounts.includes(n)}
+                      onChange={(e) => {
+                        const checked = e.target.checked;
+                        setBirthCounts(prev => checked ? [...prev, n] : prev.filter(x => x !== n));
+                      }}
+                    />
+                    <span style={{ marginLeft: '3px' }}>{n}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+          </>
+        )}
 
       </div>
     </div>
