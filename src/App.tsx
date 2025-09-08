@@ -21,7 +21,6 @@ export default function App(): JSX.Element {
   const isMouseDown = useRef(false);
   const drawMode = useRef(1);
 
-  // Defaults
   const defaults = {
     cellSize: 25,
     rows: 25,
@@ -38,7 +37,6 @@ export default function App(): JSX.Element {
     showAdvanced: false
   };
 
-  // Core state
   const [cellSize, setCellSize] = useState(defaults.cellSize);
   const [rows, setRows] = useState(defaults.rows);
   const [cols, setCols] = useState(defaults.cols);
@@ -46,7 +44,6 @@ export default function App(): JSX.Element {
   const [running, setRunning] = useState(false);
   const [speed, setSpeed] = useState(defaults.speed);
 
-  // Advanced settings
   const [fillProb, setFillProb] = useState(defaults.fillProb);
   const [showGrid, setShowGrid] = useState(defaults.showGrid);
   const [aliveColor, setAliveColor] = useState(defaults.aliveColor);
@@ -57,17 +54,17 @@ export default function App(): JSX.Element {
   const [pattern, setPattern] = useState(defaults.pattern);
   const [showAdvanced, setShowAdvanced] = useState(defaults.showAdvanced);
 
+  const [panelMinimized, setPanelMinimized] = useState(false);
+
   const surviveRef = useRef(surviveCounts);
   const birthRef = useRef(birthCounts);
   useEffect(() => { surviveRef.current = surviveCounts; }, [surviveCounts]);
   useEffect(() => { birthRef.current = birthCounts; }, [birthCounts]);
 
-  // Panel drag
   const isDragging = useRef(false);
   const dragOffset = useRef({ x: 0, y: 0 });
   const [panelPos, setPanelPos] = useState({ x: 20, y: 20 });
 
-  // Responsive
   const [isMobile, setIsMobile] = useState(false);
   useEffect(() => {
     const handleResize = () => {
@@ -83,7 +80,6 @@ export default function App(): JSX.Element {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Neighbor counting
   const countNeighbors = (g: Uint8Array[], r: number, c: number) => {
     const R = g.length, C = g[0].length;
     let sum = 0;
@@ -231,6 +227,7 @@ export default function App(): JSX.Element {
     isDragging.current = true;
     dragOffset.current = { x: e.clientX - panelPos.x, y: e.clientY - panelPos.y };
   };
+
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
       if (isDragging.current)
@@ -264,29 +261,28 @@ export default function App(): JSX.Element {
 
   const patternOptions = ['Glider', 'Blinker', 'Block'];
   const applyPattern = (pat: string) => {
-  setGrid(g => {
-    const newGrid = cloneGrid(g); // keep existing cells
-    const centerR = Math.floor(rows / 2);
-    const centerC = Math.floor(cols / 2);
+    setGrid(g => {
+      const newGrid = cloneGrid(g);
+      const centerR = Math.floor(rows / 2);
+      const centerC = Math.floor(cols / 2);
 
-    const patternCells: [number, number][] =
-      pat === 'Glider' ? [[1,0],[2,1],[0,2],[1,2],[2,2]] :
-      pat === 'Blinker' ? [[0,0],[0,1],[0,2]] :
-      pat === 'Block' ? [[0,0],[0,1],[1,0],[1,1]] :
-      [];
+      const patternCells: [number, number][] =
+        pat === 'Glider' ? [[1,0],[2,1],[0,2],[1,2],[2,2]] :
+        pat === 'Blinker' ? [[0,0],[0,1],[0,2]] :
+        pat === 'Block' ? [[0,0],[0,1],[1,0],[1,1]] :
+        [];
 
-    patternCells.forEach(([r, c]) => {
-      const row = centerR + r;
-      const col = centerC + c;
-      if (row >= 0 && row < rows && col >= 0 && col < cols) {
-        newGrid[row][col] = 1;
-      }
+      patternCells.forEach(([r, c]) => {
+        const row = centerR + r;
+        const col = centerC + c;
+        if (row >= 0 && row < rows && col >= 0 && col < cols) {
+          newGrid[row][col] = 1;
+        }
+      });
+
+      return newGrid;
     });
-
-    return newGrid;
-  });
-};
-
+  };
 
   return (
     <div style={{
@@ -322,158 +318,182 @@ export default function App(): JSX.Element {
           boxShadow: '0 4px 12px rgba(0,0,0,0.3)'
         }}
       >
-        {/* Header */}
+        {/* Header with minimize button */}
         <div
-          onMouseDown={handleHeaderMouseDown}
-          style={{
-            textAlign: 'center',
-            marginBottom: '12px',
-            fontWeight: 500,
-            cursor: isMobile ? 'default' : 'move',
-            userSelect: 'none',
-            padding: '6px 0',
-            background: 'rgba(55,65,81,0.8)',
-            borderRadius: '6px',
-            fontSize: '1rem'
-          }}
-        >
-          Conway's Game of Life
+  onMouseDown={handleHeaderMouseDown}
+  style={{
+    fontWeight: 500,
+    textAlign: 'center',
+    marginBottom: '12px',   // space between header and buttons
+    cursor: 'move',
+    padding: '1px 10px',   // gives enough vertical and horizontal padding
+    background: 'rgba(55,65,81,0.8)',  // subtle header background
+    borderRadius: '6px',
+    fontSize: '1rem',
+    userSelect: 'none'
+  }}
+>
+          <span>Conway's Game of Life</span>
+          <button
+            onClick={() => setPanelMinimized(prev => !prev)}
+            style={{
+              background: 'transparent',
+              border: 'none',
+              color: '#fff',
+              cursor: 'pointer',
+              fontSize: '1rem'
+            }}
+          >
+            {panelMinimized ? '▼' : '▲'}
+          </button>
         </div>
 
-        {/* Buttons */}
-        <div style={{ display: 'flex', gap: '6px', marginBottom: '12px', flexWrap: 'wrap' }}>
-          {[ 
-            { label: running ? 'Stop' : 'Start', onClick: toggleRunning, bg: running ? '#06b6d4' : '#374151' },
-            { label: 'Step', onClick: stepOnce, bg: '#374151' },
-            { label: 'Random', onClick: randomize, bg: '#374151' },
-            { label: 'Clear', onClick: clear, bg: '#374151' },
-            { label: 'Adv.', onClick: () => setShowAdvanced(prev => !prev), bg: '#374151' },
-          ].map(({ label, onClick, bg }) => (
-            <button
-              key={label}
-              onClick={onClick}
-              style={{
-                padding: '6px 12px',
-                borderRadius: '6px',
-                background: bg,
-                color: '#fff',
-                border: 'none',
-                cursor: 'pointer',
-                fontWeight: 'normal',
-                fontSize: '0.95rem',
-                whiteSpace: 'nowrap',
-              }}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
-
-        {/* Sliders */}
-        {[['Speed', speed, 0, 5, setSpeed, ' gen/s'],
-          ['Cell size', cellSize, 6, 40, setCellSize, ' px'],
-          ['Rows', rows, 5, 500, handleRowsChange, ''],
-          ['Cols', cols, 5, 500, handleColsChange, '']].map(([label, value, min, max, setter, unit], idx) => (
-          <div key={idx} style={{ display: 'flex', alignItems: 'center', marginBottom: '10px' }}>
-            <label style={{ width: '100px', fontWeight: 600 }}>{label}:</label>
-            <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <input
-                type="range"
-                min={min as number}
-                max={max as number}
-                step={label === 'Speed' ? 0.25 : 1}
-                value={value as number}
-                onChange={(e) => setter(Number(e.target.value))}
-                style={{ flex: 1, height: '8px', borderRadius: '4px' }}
-              />
-              <span style={{ minWidth: '50px', textAlign: 'right', fontSize: '0.95rem' }}>
-                {`${value}${unit}`}
-              </span>
+        {/* Panel contents with collapse animation */}
+        <div style={{
+          maxHeight: panelMinimized ? '0px' : '2000px',
+          overflow: 'hidden',
+          transition: 'max-height 0.3s ease'
+        }}>
+          <div style={{
+            opacity: panelMinimized ? 0 : 1,
+            transition: 'opacity 0.3s ease',
+            pointerEvents: panelMinimized ? 'none' : 'auto'
+          }}>
+            {/* Buttons */}
+            <div style={{ display: 'flex', gap: '6px', marginBottom: '12px', flexWrap: 'wrap' }}>
+              {[ 
+                { label: running ? 'Stop' : 'Start', onClick: toggleRunning, bg: running ? '#06b6d4' : '#374151' },
+                { label: 'Step', onClick: stepOnce, bg: '#374151' },
+                { label: 'Random', onClick: randomize, bg: '#374151' },
+                { label: 'Clear', onClick: clear, bg: '#374151' },
+                { label: 'Adv.', onClick: () => setShowAdvanced(prev => !prev), bg: '#374151' },
+              ].map(({ label, onClick, bg }) => (
+                <button
+                  key={label}
+                  onClick={onClick}
+                  style={{
+                    padding: '6px 12px',
+                    borderRadius: '6px',
+                    background: bg,
+                    color: '#fff',
+                    border: 'none',
+                    cursor: 'pointer',
+                    fontWeight: 'normal',
+                    fontSize: '0.95rem',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  {label}
+                </button>
+              ))}
             </div>
+
+            {/* Sliders */}
+            {[['Speed', speed, 0, 5, setSpeed, ' gen/s'],
+              ['Cell size', cellSize, 6, 40, setCellSize, ' px'],
+              ['Rows', rows, 5, 500, handleRowsChange, ''],
+              ['Cols', cols, 5, 500, handleColsChange, '']].map(([label, value, min, max, setter, unit], idx) => (
+              <div key={idx} style={{ display: 'flex', alignItems: 'center', marginBottom: '10px' }}>
+                <label style={{ width: '100px', fontWeight: 600 }}>{label}:</label>
+                <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <input
+                    type="range"
+                    min={min as number}
+                    max={max as number}
+                    step={label === 'Speed' ? 0.25 : 1}
+                    value={value as number}
+                    onChange={(e) => setter(Number(e.target.value))}
+                    style={{ flex: 1, height: '8px', borderRadius: '4px' }}
+                  />
+                  <span style={{ minWidth: '50px', textAlign: 'right', fontSize: '0.95rem' }}>
+                    {`${value}${unit}`}
+                  </span>
+                </div>
+              </div>
+            ))}
+
+            {/* Advanced Settings */}
+            {showAdvanced && (
+              <>
+                <div style={{ display: 'flex', alignItems: 'center', marginBottom: '10px' }}>
+                  <label style={{ width: '100px', fontWeight: 600 }}>Fill prob:</label>
+                  <input
+                    type="range"
+                    min={0}
+                    max={1}
+                    step={0.01}
+                    value={fillProb}
+                    onChange={(e) => setFillProb(Number(e.target.value))}
+                    style={{ flex: 1, marginRight: '8px', height: '8px', borderRadius: '4px' }}
+                  />
+                  <div style={{ width: '40px', textAlign: 'right', fontSize: '0.95rem' }}>
+                    {`${Math.round(fillProb * 100)}%`}
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px', gap: '8px' }}>
+                  <label style={{ fontWeight: 600 }}>Alive:</label>
+                  <input type="color" value={aliveColor} onChange={e => setAliveColor(e.target.value)} />
+                  <label style={{ fontWeight: 600 }}>Dead:</label>
+                  <input type="color" value={deadColor} onChange={e => setDeadColor(e.target.value)} />
+                </div>
+
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px', gap: '8px', fontWeight: 600 }}>
+                  <label><input type="checkbox" checked={showGrid} onChange={e => setShowGrid(e.target.checked)} /> Show Grid</label>
+                  <label><input type="checkbox" checked={wrapEdges} onChange={e => setWrapEdges(e.target.checked)} /> Wrap Edges</label>
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', marginBottom: '10px', gap: '4px' }}>
+                  <label style={{ fontWeight: 600 }}>Pattern:</label>
+                  <select
+                    value={pattern}
+                    onChange={(e) => { setPattern(e.target.value); applyPattern(e.target.value); }}
+                    style={{ padding: '4px 8px', borderRadius: '6px', background: '#374151', color: '#fff', border: 'none' }}
+                  >
+                    <option value="">None</option>
+                    {patternOptions.map(p => <option key={p} value={p}>{p}</option>)}
+                  </select>
+                </div>
+
+                <div style={{ marginTop: '8px' }}>
+                  <div style={{ marginBottom: '4px', fontWeight: 600 }}>Survive counts:</div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: '4px' }}>
+                    {Array.from({ length: 9 }, (_, n) => (
+                      <label key={`s${n}`} style={{ display: 'flex', alignItems: 'center', fontSize: '0.95rem', fontWeight: 600 }}>
+                        <input
+                          type="checkbox"
+                          checked={surviveCounts.includes(n)}
+                          onChange={(e) => {
+                            const checked = e.target.checked;
+                            setSurviveCounts(prev => checked ? [...prev, n] : prev.filter(x => x !== n));
+                          }}
+                        />
+                        <span style={{ marginLeft: '3px' }}>{n}</span>
+                      </label>
+                    ))}
+                  </div>
+
+                  <div style={{ marginTop: '6px', marginBottom: '4px', fontWeight: 600 }}>Birth counts:</div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: '4px' }}>
+                    {Array.from({ length: 9 }, (_, n) => (
+                      <label key={`b${n}`} style={{ display: 'flex', alignItems: 'center', fontSize: '0.95rem', fontWeight: 600 }}>
+                        <input
+                          type="checkbox"
+                          checked={birthCounts.includes(n)}
+                          onChange={(e) => {
+                            const checked = e.target.checked;
+                            setBirthCounts(prev => checked ? [...prev, n] : prev.filter(x => x !== n));
+                          }}
+                        />
+                        <span style={{ marginLeft: '3px' }}>{n}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              </>
+            )}
           </div>
-        ))}
-
-        {/* Advanced Settings */}
-        {showAdvanced && (
-          <>
-            <div style={{ display: 'flex', alignItems: 'center', marginBottom: '10px' }}>
-              <label style={{ width: '100px', fontWeight: 600 }}>Fill prob:</label>
-              <input
-                type="range"
-                min={0}
-                max={1}
-                step={0.01}
-                value={fillProb}
-                onChange={(e) => setFillProb(Number(e.target.value))}
-                style={{ flex: 1, marginRight: '8px', height: '8px', borderRadius: '4px' }}
-              />
-              <div style={{ width: '40px', textAlign: 'right', fontSize: '0.95rem' }}>
-                {`${Math.round(fillProb * 100)}%`}
-              </div>
-            </div>
-
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px', gap: '8px' }}>
-              <label style={{ fontWeight: 600 }}>Alive:</label>
-              <input type="color" value={aliveColor} onChange={e => setAliveColor(e.target.value)} />
-              <label style={{ fontWeight: 600 }}>Dead:</label>
-              <input type="color" value={deadColor} onChange={e => setDeadColor(e.target.value)} />
-            </div>
-
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px', gap: '8px', fontWeight: 600 }}>
-              <label><input type="checkbox" checked={showGrid} onChange={e => setShowGrid(e.target.checked)} /> Show Grid</label>
-              <label><input type="checkbox" checked={wrapEdges} onChange={e => setWrapEdges(e.target.checked)} /> Wrap Edges</label>
-            </div>
-
-            <div style={{ display: 'flex', flexDirection: 'column', marginBottom: '10px', gap: '4px' }}>
-              <label style={{ fontWeight: 600 }}>Pattern:</label>
-              <select
-                value={pattern}
-                onChange={(e) => { setPattern(e.target.value); applyPattern(e.target.value); }}
-                style={{ padding: '4px 8px', borderRadius: '6px', background: '#374151', color: '#fff', border: 'none' }}
-              >
-                <option value="">None</option>
-                {patternOptions.map(p => <option key={p} value={p}>{p}</option>)}
-              </select>
-            </div>
-
-            <div style={{ marginTop: '8px' }}>
-              <div style={{ marginBottom: '4px', fontWeight: 600 }}>Survive counts:</div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: '4px' }}>
-                {Array.from({ length: 9 }, (_, n) => (
-                  <label key={`s${n}`} style={{ display: 'flex', alignItems: 'center', fontSize: '0.95rem', fontWeight: 600 }}>
-                    <input
-                      type="checkbox"
-                      checked={surviveCounts.includes(n)}
-                      onChange={(e) => {
-                        const checked = e.target.checked;
-                        setSurviveCounts(prev => checked ? [...prev, n] : prev.filter(x => x !== n));
-                      }}
-                    />
-                    <span style={{ marginLeft: '3px' }}>{n}</span>
-                  </label>
-                ))}
-              </div>
-
-              <div style={{ marginTop: '6px', marginBottom: '4px', fontWeight: 600 }}>Birth counts:</div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: '4px' }}>
-                {Array.from({ length: 9 }, (_, n) => (
-                  <label key={`b${n}`} style={{ display: 'flex', alignItems: 'center', fontSize: '0.95rem', fontWeight: 600 }}>
-                    <input
-                      type="checkbox"
-                      checked={birthCounts.includes(n)}
-                      onChange={(e) => {
-                        const checked = e.target.checked;
-                        setBirthCounts(prev => checked ? [...prev, n] : prev.filter(x => x !== n));
-                      }}
-                    />
-                    <span style={{ marginLeft: '3px' }}>{n}</span>
-                  </label>
-                ))}
-              </div>
-            </div>
-          </>
-        )}
-
+        </div>
       </div>
     </div>
   );
