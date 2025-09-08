@@ -344,7 +344,7 @@ export default function App(): JSX.Element {
               fontSize: '1rem'
             }}
           >
-            {panelMinimized ? '▼' : '▲'}
+            {panelMinimized ? '+' : '-'}
           </button>
         </div>
 
