@@ -31,6 +31,13 @@ export default function App(): JSX.Element {
 
   speedRef.current = speed;
 
+  // --- Panel drag state ---
+  const panelRef = useRef<HTMLDivElement | null>(null);
+  const isDragging = useRef(false);
+  const dragOffset = useRef({ x: 0, y: 0 });
+  const [panelPos, setPanelPos] = useState({ x: 20, y: 20 });
+
+  // --- Grid logic ---
   const countNeighbors = (g: Uint8Array[], r: number, c: number) => {
     const R = g.length;
     const C = g[0].length;
@@ -116,6 +123,7 @@ export default function App(): JSX.Element {
     else if (rafRef.current) cancelAnimationFrame(rafRef.current);
   };
 
+  // --- Canvas interaction ---
   const handleMouseDown = (e: React.MouseEvent) => {
     isMouseDown.current = true;
     const canvas = canvasRef.current;
@@ -133,7 +141,6 @@ export default function App(): JSX.Element {
       return ng;
     });
   };
-
   const handleMouseUp = () => { isMouseDown.current = false; };
   const handleMouseMove = (e: React.MouseEvent) => {
     if (!isMouseDown.current) return;
@@ -155,9 +162,31 @@ export default function App(): JSX.Element {
     for (let r = 0; r < ng.length; r++) for (let c = 0; c < ng[0].length; c++) ng[r][c] = Math.random() > 0.75 ? 1 : 0;
     return ng;
   });
-
   const clear = () => setGrid(() => createEmptyGrid(rows, cols));
   const stepOnce = () => setGrid((g) => step(g));
+
+  // --- Panel header drag ---
+  const handleHeaderMouseDown = (e: React.MouseEvent) => {
+    isDragging.current = true;
+    dragOffset.current = { x: e.clientX - panelPos.x, y: e.clientY - panelPos.y };
+  };
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (isDragging.current) {
+        setPanelPos({ x: e.clientX - dragOffset.current.x, y: e.clientY - dragOffset.current.y });
+      }
+    };
+    const handleMouseUp = () => {
+      isDragging.current = false;
+    };
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', handleMouseUp);
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, []);
 
   const handleRowsChange = (newRows: number) => {
     setRows(newRows);
@@ -180,10 +209,11 @@ export default function App(): JSX.Element {
   return (
     <div style={{ position: 'relative', width: '100%', height: '100vh', overflow: 'auto', background: '#111827' }}>
       <div
+        ref={panelRef}
         style={{
           position: 'fixed',
-          top: '20px',
-          left: '20px',
+          top: panelPos.y,
+          left: panelPos.x,
           background: 'rgba(17,24,39,0.95)',
           padding: '12px',
           borderRadius: '10px',
@@ -192,7 +222,24 @@ export default function App(): JSX.Element {
           boxShadow: '0 4px 12px rgba(0,0,0,0.3)'
         }}
       >
-        <div style={{ textAlign: 'center', marginBottom: '10px' }}><strong>Conway's Game of Life</strong></div>
+        {/* Header (draggable) */}
+        <div
+          onMouseDown={handleHeaderMouseDown}
+          style={{
+            textAlign: 'center',
+            marginBottom: '10px',
+            fontWeight: 'bold',
+            cursor: 'move',
+            userSelect: 'none',
+            padding: '4px 0',
+            background: 'rgba(55,65,81,0.8)',
+            borderRadius: '6px'
+          }}
+        >
+          Conway's Game of Life
+        </div>
+
+        {/* Buttons */}
         <div style={{ display: 'flex', gap: '6px', marginBottom: '10px', flexWrap: 'wrap' }}>
           <button onClick={toggleRunning} style={{ flex: 1, padding: '6px', borderRadius: '6px', background: running ? '#06b6d4' : '#374151', color: '#fff', border: 'none' }}>{running ? 'Stop' : 'Start'}</button>
           <button onClick={stepOnce} style={{ flex: 1, padding: '6px', borderRadius: '6px' }}>Step</button>
@@ -200,6 +247,7 @@ export default function App(): JSX.Element {
           <button onClick={clear} style={{ flex: 1, padding: '6px', borderRadius: '6px' }}>Clear</button>
         </div>
 
+        {/* Sliders */}
         {[
           ['Speed', speed, 1, 24, setSpeed, ' gen/s'],
           ['Cell size', cellSize, 6, 40, setCellSize, ' px'],
@@ -221,6 +269,7 @@ export default function App(): JSX.Element {
         ))}
       </div>
 
+      {/* Canvas */}
       <div style={{ padding: '10px' }}>
         <canvas
           ref={canvasRef}
