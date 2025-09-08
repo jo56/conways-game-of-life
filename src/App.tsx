@@ -23,8 +23,8 @@ export default function App(): JSX.Element {
 
   // Defaults
   const defaults = {
-    cellSize: 20,
-    rows: 20,
+    cellSize: 25,
+    rows: 25,
     cols: 30,
     speed: 2,
     fillProb: 0.25,
@@ -357,8 +357,8 @@ export default function App(): JSX.Element {
         {/* Sliders */}
         {[['Speed', speed, 0, 5, setSpeed, ' gen/s'],
           ['Cell size', cellSize, 6, 40, setCellSize, ' px'],
-          ['Rows', rows, 5, 300, handleRowsChange, ''],
-          ['Cols', cols, 5, 300, handleColsChange, '']].map(([label, value, min, max, setter, unit], idx) => (
+          ['Rows', rows, 5, 500, handleRowsChange, ''],
+          ['Cols', cols, 5, 500, handleColsChange, '']].map(([label, value, min, max, setter, unit], idx) => (
           <div key={idx} style={{ display: 'flex', alignItems: 'center', marginBottom: '10px' }}>
             <label style={{ width: '100px', fontWeight: 600 }}>{label}:</label>
             <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: '8px' }}>
