@@ -320,34 +320,39 @@ export default function App(): JSX.Element {
       >
         {/* Header with minimize button */}
         <div
-  onMouseDown={handleHeaderMouseDown}
-  style={{
-    fontWeight: 500,
-    textAlign: 'center',
-    marginBottom: '12px',   // space between header and buttons
-    cursor: 'move',
-    padding: '1px 10px',   // gives enough vertical and horizontal padding
-    background: 'rgba(55,65,81,0.8)',  // subtle header background
-    borderRadius: '6px',
-    fontSize: '1rem',
-    userSelect: 'none'
-  }}
->
-          <span>Conway's Game of Life</span>
-          <button
+        onMouseDown={handleHeaderMouseDown}
+        style={{
+            fontWeight: 500,
+            textAlign: 'center',
+            marginBottom: '12px',
+            cursor: 'move',
+            padding: '1px 1px',
+            background: 'rgba(55,65,81,0.8)',
+            borderRadius: '6px',
+            fontSize: '1rem',
+            userSelect: 'none',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            gap: '0px'   // spacing between text and button
+        }}
+        >
+        <span>Conway's Game of Life</span>
+        <button
             onClick={() => setPanelMinimized(prev => !prev)}
             style={{
-              background: 'transparent',
-              border: 'none',
-              color: '#fff',
-              cursor: 'pointer',
-              fontSize: '1rem'
+            background: 'transparent',
+            border: 'none',
+            color: '#fff',
+            cursor: 'pointer',
+            fontSize: '1rem',
+            width: '20px',         // fixed width prevents text shift
+            textAlign: 'center'
             }}
-          >
+        >
             {panelMinimized ? '+' : '-'}
-          </button>
+        </button>
         </div>
-
         {/* Panel contents with collapse animation */}
         <div style={{
           maxHeight: panelMinimized ? '0px' : '2000px',
@@ -389,8 +394,8 @@ export default function App(): JSX.Element {
             </div>
 
             {/* Sliders */}
-            {[['Speed', speed, 0, 5, setSpeed, ' gen/s'],
-              ['Cell size', cellSize, 6, 40, setCellSize, ' px'],
+            {[['Speed', speed, 0, 10, setSpeed, ' gen/s'],
+              ['Cell size', cellSize, 1, 40, setCellSize, ' px'],
               ['Rows', rows, 5, 500, handleRowsChange, ''],
               ['Cols', cols, 5, 500, handleColsChange, '']].map(([label, value, min, max, setter, unit], idx) => (
               <div key={idx} style={{ display: 'flex', alignItems: 'center', marginBottom: '10px' }}>
