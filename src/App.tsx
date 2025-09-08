@@ -61,6 +61,7 @@ export default function App(): JSX.Element {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d')!;
+
     canvas.width = cols * cellSize;
     canvas.height = rows * cellSize;
 
@@ -77,17 +78,17 @@ export default function App(): JSX.Element {
     }
 
     ctx.strokeStyle = GRID_COLOR;
-    ctx.lineWidth = 1;
+    ctx.lineWidth = 0.5;
     for (let x = 0; x <= cols * cellSize; x += cellSize) {
       ctx.beginPath();
-      ctx.moveTo(x + 0.5, 0);
-      ctx.lineTo(x + 0.5, rows * cellSize);
+      ctx.moveTo(x + 0.25, 0);
+      ctx.lineTo(x + 0.25, rows * cellSize);
       ctx.stroke();
     }
     for (let y = 0; y <= rows * cellSize; y += cellSize) {
       ctx.beginPath();
-      ctx.moveTo(0, y + 0.5);
-      ctx.lineTo(cols * cellSize, y + 0.5);
+      ctx.moveTo(0, y + 0.25);
+      ctx.lineTo(cols * cellSize, y + 0.25);
       ctx.stroke();
     }
   }, [grid, rows, cols, cellSize]);
@@ -133,10 +134,7 @@ export default function App(): JSX.Element {
     });
   };
 
-  const handleMouseUp = () => {
-    isMouseDown.current = false;
-  };
-
+  const handleMouseUp = () => { isMouseDown.current = false; };
   const handleMouseMove = (e: React.MouseEvent) => {
     if (!isMouseDown.current) return;
     const canvas = canvasRef.current;
@@ -147,94 +145,89 @@ export default function App(): JSX.Element {
 
     setGrid((g) => {
       const ng = cloneGrid(g);
-      if (y >= 0 && y < rows && x >= 0 && x < cols) {
-        ng[y][x] = drawMode.current;
-      }
+      if (y >= 0 && y < rows && x >= 0 && x < cols) ng[y][x] = drawMode.current;
       return ng;
     });
   };
 
-  const randomize = () => {
-    setGrid(() => {
-      const ng = createEmptyGrid(rows, cols);
-      for (let r = 0; r < ng.length; r++) {
-        for (let c = 0; c < ng[0].length; c++) {
-          ng[r][c] = Math.random() > 0.75 ? 1 : 0;
-        }
-      }
-      return ng;
-    });
-  };
+  const randomize = () => setGrid(() => {
+    const ng = createEmptyGrid(rows, cols);
+    for (let r = 0; r < ng.length; r++) for (let c = 0; c < ng[0].length; c++) ng[r][c] = Math.random() > 0.75 ? 1 : 0;
+    return ng;
+  });
 
   const clear = () => setGrid(() => createEmptyGrid(rows, cols));
   const stepOnce = () => setGrid((g) => step(g));
 
-  const controlRowStyle: React.CSSProperties = {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '8px',
-    marginBottom: '6px'
+  const handleRowsChange = (newRows: number) => {
+    setRows(newRows);
+    setGrid((g) => {
+      const newGrid = createEmptyGrid(newRows, cols);
+      for (let r = 0; r < Math.min(g.length, newRows); r++) newGrid[r].set(g[r]);
+      return newGrid;
+    });
   };
 
-  const infoLabelStyle: React.CSSProperties = {
-    width: '80px'
-  };
-
-  const sliderStyle: React.CSSProperties = {
-    flex: 1
+  const handleColsChange = (newCols: number) => {
+    setCols(newCols);
+    setGrid((g) => g.map(row => {
+      const newRow = new Uint8Array(newCols);
+      newRow.set(row.slice(0, Math.min(row.length, newCols)));
+      return newRow;
+    }));
   };
 
   return (
-    <div className="app" style={{ padding: '10px', fontFamily: 'sans-serif', color: '#f0f0f0' }}>
-      <div className="panel controls" style={{ marginBottom: '10px', padding: '10px', background: '#111827', borderRadius: '8px' }}>
-        <div style={controlRowStyle}><strong>Conway's Game of Life</strong></div>
-        <div style={controlRowStyle}>
-          <button onClick={toggleRunning} style={{ padding: '4px 8px', background: running ? '#06b6d4' : '#374151', border: 'none', color: '#fff', borderRadius: '4px' }}>{running ? 'Stop' : 'Start'}</button>
-          <button onClick={stepOnce} style={{ padding: '4px 8px' }}>Step</button>
-          <button onClick={randomize} style={{ padding: '4px 8px' }}>Randomize</button>
-          <button onClick={clear} style={{ padding: '4px 8px' }}>Clear</button>
+    <div style={{ position: 'relative', width: '100%', height: '100vh', overflow: 'auto', background: '#111827' }}>
+      <div
+        style={{
+          position: 'fixed',
+          top: '20px',
+          left: '20px',
+          background: 'rgba(17,24,39,0.95)',
+          padding: '12px',
+          borderRadius: '10px',
+          maxWidth: '300px',
+          zIndex: 1000,
+          boxShadow: '0 4px 12px rgba(0,0,0,0.3)'
+        }}
+      >
+        <div style={{ textAlign: 'center', marginBottom: '10px' }}><strong>Conway's Game of Life</strong></div>
+        <div style={{ display: 'flex', gap: '6px', marginBottom: '10px', flexWrap: 'wrap' }}>
+          <button onClick={toggleRunning} style={{ flex: 1, padding: '6px', borderRadius: '6px', background: running ? '#06b6d4' : '#374151', color: '#fff', border: 'none' }}>{running ? 'Stop' : 'Start'}</button>
+          <button onClick={stepOnce} style={{ flex: 1, padding: '6px', borderRadius: '6px' }}>Step</button>
+          <button onClick={randomize} style={{ flex: 1, padding: '6px', borderRadius: '6px' }}>Randomize</button>
+          <button onClick={clear} style={{ flex: 1, padding: '6px', borderRadius: '6px' }}>Clear</button>
         </div>
 
-        <div style={controlRowStyle}>
-        <label style={infoLabelStyle}>Speed:</label>
-        <input className="slider" type="range" min={1} max={24} value={speed} onChange={(e) => setSpeed(Number(e.target.value))} style={sliderStyle} />
-        <div>{speed} gen/s</div>
-        </div>
-
-        <div style={controlRowStyle}>
-        <label style={infoLabelStyle}>Cell size:</label>
-        <input className="slider" type="range" min={6} max={40} value={cellSize} onChange={(e) => setCellSize(Number(e.target.value))} style={sliderStyle} />
-        <div>{cellSize}px</div>
-        </div>
-
-        <div style={controlRowStyle}>
-        <label style={infoLabelStyle}>Rows:</label>
-        <input className="slider" type="range" min={5} max={200} value={rows} onChange={(e) => {
-            const newRows = Number(e.target.value);
-            setRows(newRows);
-            setGrid(createEmptyGrid(newRows, cols));
-        }} style={sliderStyle} />
-        <div>{rows}</div>
-        </div>
-
-        <div style={controlRowStyle}>
-        <label style={infoLabelStyle}>Cols:</label>
-        <input className="slider" type="range" min={5} max={200} value={cols} onChange={(e) => {
-            const newCols = Number(e.target.value);
-            setCols(newCols);
-            setGrid(createEmptyGrid(rows, newCols));
-        }} style={sliderStyle} />
-        <div>{cols}</div>
-        </div>
+        {[
+          ['Speed', speed, 1, 24, setSpeed, ' gen/s'],
+          ['Cell size', cellSize, 6, 40, setCellSize, ' px'],
+          ['Rows', rows, 5, 300, handleRowsChange, ''],
+          ['Cols', cols, 5, 300, handleColsChange, '']
+        ].map(([label, value, min, max, setter, unit], idx) => (
+          <div key={idx} style={{ display: 'flex', alignItems: 'center', marginBottom: '8px' }}>
+            <label style={{ width: '80px', fontWeight: 500 }}>{label}:</label>
+            <input
+              type="range"
+              min={min as number}
+              max={max as number}
+              value={value as number}
+              onChange={(e) => setter(Number(e.target.value))}
+              style={{ flex: 1, marginRight: '6px', height: '6px', borderRadius: '4px' }}
+            />
+            <div style={{ width: '40px', textAlign: 'right' }}>{value}{unit}</div>
+          </div>
+        ))}
       </div>
 
-      <div className="canvasWrap panel" style={{ minHeight: 400, background: '#111827', borderRadius: '8px', padding: '10px' }}>
+      <div style={{ padding: '10px' }}>
         <canvas
           ref={canvasRef}
           onMouseDown={handleMouseDown}
           onMouseUp={handleMouseUp}
           onMouseMove={handleMouseMove}
-          style={{ display: 'block', margin: '0 auto', cursor: 'crosshair', background: DEAD_COLOR }}
+          style={{ display: 'block', cursor: 'crosshair', background: DEAD_COLOR }}
         />
       </div>
     </div>
