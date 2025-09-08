@@ -449,7 +449,7 @@ export default function App(): JSX.Element {
                 </div>
 
                 <div style={{ display: 'flex', flexDirection: 'column', marginBottom: '10px', gap: '4px' }}>
-                  <label style={{ fontWeight: 600 }}>Pattern:</label>
+                  <label style={{ fontWeight: 600 }}>Starting Pattern:</label>
                   <select
                     value={pattern}
                     onChange={(e) => { setPattern(e.target.value); applyPattern(e.target.value); }}
