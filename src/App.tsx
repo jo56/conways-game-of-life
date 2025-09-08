@@ -441,8 +441,8 @@ useEffect(() => {
             {/* Sliders */}
             {[['Speed', speed, 0.25, 100, setSpeed, ' gen/s'],
               ['Cell size', cellSize, 1, 40, setCellSize, ' px'],
-              ['Rows', rows, 5, 500, handleRowsChange, ''],
-              ['Cols', cols, 5, 500, handleColsChange, '']].map(([label, value, min, max, setter, unit], idx) => (
+              ['Rows', rows, 5, 1000, handleRowsChange, ''],
+              ['Cols', cols, 5, 1000, handleColsChange, '']].map(([label, value, min, max, setter, unit], idx) => (
               <div key={idx} style={{ display: 'flex', alignItems: 'center', marginBottom: '10px' }}>
                 <label style={{ width: '100px', fontWeight: 600 }}>{label}:</label>
                 <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: '8px' }}>
