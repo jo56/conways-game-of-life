@@ -312,7 +312,7 @@ useEffect(() => {
       <div
         ref={panelRef}
         style={{
-          position: isMobile ? 'relative' : 'fixed',
+          position: isMobile ? 'relative' : 'absolute',
           top: isMobile ? undefined : panelPos.y,
           left: isMobile ? undefined : panelPos.x,
           marginTop: isMobile ? '10px' : undefined,
