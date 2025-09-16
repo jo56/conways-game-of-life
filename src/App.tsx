@@ -69,6 +69,7 @@ export default function App(): JSX.Element {
   const isDragging = useRef(false);
   const dragOffset = useRef({ x: 0, y: 0 });
   const [panelPos, setPanelPos] = useState({ x: 20, y: 20 });
+  const [initialPositionSet, setInitialPositionSet] = useState(false);
   const mousePos = useRef({ x: 0, y: 0 });
 
   const [isMobile, setIsMobile] = useState(false);
@@ -82,9 +83,10 @@ export default function App(): JSX.Element {
       }
     };
     const handleLoad = () => {
-      if (!isMobile && canvasContainerRef.current) {
+      if (!isMobile && canvasContainerRef.current && !initialPositionSet) {
         const rect = canvasContainerRef.current.getBoundingClientRect();
         setPanelPos({ x: rect.right + 10, y: rect.top });
+        setInitialPositionSet(true);
       }
     };
     window.addEventListener('resize', handleResize);
@@ -95,14 +97,14 @@ export default function App(): JSX.Element {
       window.removeEventListener('resize', handleResize);
       window.removeEventListener('load', handleLoad);
     };
-  }, [isMobile]);
+  }, [isMobile, initialPositionSet]);
 
   useEffect(() => {
-    if (!isMobile && canvasContainerRef.current) {
+    if (!isMobile && canvasContainerRef.current && initialPositionSet) {
       const rect = canvasContainerRef.current.getBoundingClientRect();
       setPanelPos({ x: rect.right + 10, y: rect.top });
     }
-  }, [isMobile, rows, cols, cellSize]);
+  }, [isMobile, rows, cols, cellSize, initialPositionSet]);
 
   const countNeighbors = (g: Uint8Array[], r: number, c: number) => {
     const R = g.length, C = g[0].length;
@@ -274,7 +276,7 @@ export default function App(): JSX.Element {
           const mouseX = mousePos.current.x || window.innerWidth / 2;
           const mouseY = mousePos.current.y || window.innerHeight / 2;
           const newX = Math.max(10, Math.min(mouseX - 200, window.innerWidth - 440));
-          const newY = Math.max(10, Math.min(mouseY - 50, window.innerHeight - 400));
+          const newY = Math.max(10, mouseY - 50);
           setPanelPos({ x: newX, y: newY });
         }
       }
@@ -365,7 +367,9 @@ export default function App(): JSX.Element {
             borderRadius: '10px',
             maxWidth: '430px',
             zIndex: 1000,
-            boxShadow: '0 4px 12px rgba(0,0,0,0.3)'
+            boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+            opacity: (!isMobile && !initialPositionSet) ? 0 : 1,
+            transition: (!isMobile && !initialPositionSet) ? 'none' : 'opacity 0.2s ease'
           }}
         >
         {/* Header with minimize button */}
