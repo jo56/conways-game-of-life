@@ -351,7 +351,9 @@ export default function App(): JSX.Element {
           maxWidth: '430px',
           zIndex: 1000,
           boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
-          display: panelVisible ? 'block' : 'none'
+          visibility: panelVisible ? 'visible' : 'hidden',
+          opacity: panelVisible ? 1 : 0,
+          pointerEvents: panelVisible ? 'auto' : 'none'
         }}
       >
         {/* Header with minimize button */}
