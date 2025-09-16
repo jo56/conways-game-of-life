@@ -61,11 +61,9 @@ export default function App(): JSX.Element {
   useEffect(() => { surviveRef.current = surviveCounts; }, [surviveCounts]);
   useEffect(() => { birthRef.current = birthCounts; }, [birthCounts]);
   const speedRef = useRef(speed);
-useEffect(() => {
-  speedRef.current = speed;
-}, [speed]);
-
-  
+  useEffect(() => {
+    speedRef.current = speed;
+  }, [speed]);
 
   const isDragging = useRef(false);
   const dragOffset = useRef({ x: 0, y: 0 });
@@ -151,26 +149,29 @@ useEffect(() => {
 
   useEffect(() => draw(), [draw]);
 
-  const runLoop = () => {
-  let lastTime = performance.now();
-  const loop = (time: number) => {
-    if (!runningRef.current) return;
-    const interval = 1000 / Math.max(0.25, speedRef.current);  // <-- use ref
-    if (time - lastTime >= interval) {
-      setGrid(g => step(g));
-      lastTime = time;
-    }
+  const runLoop = useCallback(() => {
+    let lastTime = performance.now();
+    const loop = (time: number) => {
+      if (!runningRef.current) return;
+      const interval = 1000 / Math.max(0.25, speedRef.current);
+      if (time - lastTime >= interval) {
+        setGrid(g => step(g));
+        lastTime = time;
+      }
+      rafRef.current = requestAnimationFrame(loop);
+    };
     rafRef.current = requestAnimationFrame(loop);
-  };
-  rafRef.current = requestAnimationFrame(loop);
-};
+  }, [step]);
 
-  const toggleRunning = () => {
+  const toggleRunning = useCallback(() => {
     runningRef.current = !runningRef.current;
     setRunning(runningRef.current);
-    if (runningRef.current) runLoop();
-    else if (rafRef.current) cancelAnimationFrame(rafRef.current);
-  };
+    if (runningRef.current) {
+      runLoop();
+    } else if (rafRef.current) {
+      cancelAnimationFrame(rafRef.current);
+    }
+  }, [runLoop]);
 
   const handleMouseDown = (e: React.MouseEvent) => {
     isMouseDown.current = true;
@@ -212,8 +213,8 @@ useEffect(() => {
   });
 
   const clear = () => {
-  setGrid(createEmptyGrid(rows, cols));
-};
+    setGrid(createEmptyGrid(rows, cols));
+  };
 
   const stepOnce = () => setGrid(g => step(g));
 
@@ -226,41 +227,32 @@ useEffect(() => {
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
       mousePos.current = { x: e.clientX, y: e.clientY };
-      //console.log('Mouse position updated:', mousePos.current); 
-      
-      if (isDragging.current)
+      if (isDragging.current) {
         setPanelPos({ x: e.clientX - dragOffset.current.x, y: e.clientY - dragOffset.current.y });
+      }
     };
     const handleMouseUp = () => { isDragging.current = false; };
     
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Ignore key presses if the user is focused on an input, select, or button
+      const target = e.target as HTMLElement;
+      if (['INPUT', 'SELECT', 'BUTTON'].includes(target.tagName)) {
+        return;
+      }
+
+      if (e.key === ' ') {
+        e.preventDefault(); // Prevent default browser action (e.g., scrolling)
+        toggleRunning();
+      }
+      
       if (e.key === 'Shift') {
         e.preventDefault();
-        
-        console.log('Shift pressed! Current state:', {
-          isMobile,
-          mousePos: mousePos.current,
-          currentPanelPos: panelPos
-        });
-        
         setIsMobile(false);
-        
         const mouseX = mousePos.current.x || window.innerWidth / 2;
         const mouseY = mousePos.current.y || window.innerHeight / 2;
-        
-        // Simple positioning - just put it at mouse location with small offset
         const newX = Math.max(10, Math.min(mouseX - 200, window.innerWidth - 440));
         const newY = Math.max(10, Math.min(mouseY - 50, window.innerHeight - 400));
-        
-        console.log('Setting new panel position:', { newX, newY });
-        
-        // Force the panel position update
         setPanelPos({ x: newX, y: newY });
-        
-        // Also force a re-render by updating a dummy state if needed
-        setTimeout(() => {
-          console.log('Panel position after update:', panelPos);
-        }, 100);
       }
     };
     
@@ -273,7 +265,7 @@ useEffect(() => {
       window.removeEventListener('mouseup', handleMouseUp);
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [isMobile, panelPos]); // Add dependencies
+  }, [isMobile, panelPos, toggleRunning]); // Add toggleRunning to dependencies
 
   const handleRowsChange = (newRows: number) => {
     setRows(newRows);
@@ -367,7 +359,7 @@ useEffect(() => {
             display: 'flex',
             justifyContent: 'center',
             alignItems: 'center',
-            gap: '0px'   // spacing between text and button
+            gap: '0px'
         }}
         >
         <span>Conway's Game of Life</span>
@@ -379,7 +371,7 @@ useEffect(() => {
             color: '#fff',
             cursor: 'pointer',
             fontSize: '1rem',
-            width: '20px',         // fixed width prevents text shift
+            width: '20px',
             textAlign: 'center'
             }}
         >
@@ -399,7 +391,7 @@ useEffect(() => {
           }}>
             {/* Buttons */}
             <div style={{ display: 'flex', gap: '6px', marginBottom: '12px', flexWrap: 'wrap' }}>
-              {[ 
+              {[
                 { label: running ? 'Stop' : 'Start', onClick: toggleRunning, bg: running ? '#06b6d4' : '#374151' },
                 { label: 'Step', onClick: stepOnce, bg: '#374151' },
                 { label: 'Random', onClick: randomize, bg: '#374151' },
