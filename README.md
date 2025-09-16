@@ -14,3 +14,5 @@ The canvas is responsive; use the controls to start/stop, step, randomize, and c
 You can get rid of the settings window by dragging it offscreen.  
 
 Pressing **Shift** will cause it to reappear where your mouse is.
+
+Press **Space** to toggle Start/Stop.
