@@ -55,6 +55,7 @@ export default function App(): JSX.Element {
   const [showAdvanced, setShowAdvanced] = useState(defaults.showAdvanced);
 
   const [panelMinimized, setPanelMinimized] = useState(false);
+  const [panelVisible, setPanelVisible] = useState(true);
 
   const surviveRef = useRef(surviveCounts);
   const birthRef = useRef(birthCounts);
@@ -247,12 +248,21 @@ export default function App(): JSX.Element {
       
       if (e.key === 'Shift') {
         e.preventDefault();
-        setIsMobile(false);
-        const mouseX = mousePos.current.x || window.innerWidth / 2;
-        const mouseY = mousePos.current.y || window.innerHeight / 2;
-        const newX = Math.max(10, Math.min(mouseX - 200, window.innerWidth - 440));
-        const newY = Math.max(10, Math.min(mouseY - 50, window.innerHeight - 400));
-        setPanelPos({ x: newX, y: newY });
+        setPanelVisible(prev => {
+          if (!prev) {
+            // Panel is currently hidden, show it and teleport to mouse
+            setIsMobile(false);
+            const mouseX = mousePos.current.x || window.innerWidth / 2;
+            const mouseY = mousePos.current.y || window.innerHeight / 2;
+            const newX = Math.max(10, Math.min(mouseX - 200, window.innerWidth - 440));
+            const newY = Math.max(10, Math.min(mouseY - 50, window.innerHeight - 400));
+            setPanelPos({ x: newX, y: newY });
+            return true;
+          } else {
+            // Panel is currently visible, hide it
+            return false;
+          }
+        });
       }
     };
     
@@ -340,7 +350,8 @@ export default function App(): JSX.Element {
           borderRadius: '10px',
           maxWidth: '430px',
           zIndex: 1000,
-          boxShadow: '0 4px 12px rgba(0,0,0,0.3)'
+          boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+          display: panelVisible ? 'block' : 'none'
         }}
       >
         {/* Header with minimize button */}
