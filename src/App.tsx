@@ -55,7 +55,6 @@ export default function App(): JSX.Element {
   const [showAdvanced, setShowAdvanced] = useState(defaults.showAdvanced);
 
   const [panelMinimized, setPanelMinimized] = useState(false);
-  const [panelVisible, setPanelVisible] = useState(true);
 
   const surviveRef = useRef(surviveCounts);
   const birthRef = useRef(birthCounts);
@@ -69,7 +68,6 @@ export default function App(): JSX.Element {
   const isDragging = useRef(false);
   const dragOffset = useRef({ x: 0, y: 0 });
   const [panelPos, setPanelPos] = useState({ x: 20, y: 20 });
-  const [initialPositionSet, setInitialPositionSet] = useState(false);
   const mousePos = useRef({ x: 0, y: 0 });
 
   const [isMobile, setIsMobile] = useState(false);
@@ -82,29 +80,17 @@ export default function App(): JSX.Element {
         setPanelPos({ x: rect.right + 10, y: rect.top });
       }
     };
-    const handleLoad = () => {
-      if (!isMobile && canvasContainerRef.current && !initialPositionSet) {
-        const rect = canvasContainerRef.current.getBoundingClientRect();
-        setPanelPos({ x: rect.right + 10, y: rect.top });
-        setInitialPositionSet(true);
-      }
-    };
     window.addEventListener('resize', handleResize);
-    window.addEventListener('load', handleLoad);
     handleResize();
-    handleLoad();
-    return () => {
-      window.removeEventListener('resize', handleResize);
-      window.removeEventListener('load', handleLoad);
-    };
-  }, [isMobile, initialPositionSet]);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   useEffect(() => {
-    if (!isMobile && canvasContainerRef.current && initialPositionSet) {
+    if (!isMobile && canvasContainerRef.current) {
       const rect = canvasContainerRef.current.getBoundingClientRect();
       setPanelPos({ x: rect.right + 10, y: rect.top });
     }
-  }, [isMobile, rows, cols, cellSize, initialPositionSet]);
+  }, [isMobile, rows, cols, cellSize]);
 
   const countNeighbors = (g: Uint8Array[], r: number, c: number) => {
     const R = g.length, C = g[0].length;
@@ -137,15 +123,16 @@ export default function App(): JSX.Element {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d')!;
+    console.log('draw: rows =', rows, 'cols =', cols, 'grid =', grid.length, 'x', grid[0]?.length);
     canvas.width = cols * cellSize;
     canvas.height = rows * cellSize;
 
     ctx.fillStyle = deadColor;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    for (let r = 0; r < rows; r++)
-      for (let c = 0; c < cols; c++)
-        if (grid[r][c]) {
+    for (let r = 0; r < Math.min(rows, grid.length); r++)
+      for (let c = 0; c < Math.min(cols, grid[0]?.length || 0); c++)
+        if (grid[r] && grid[r][c]) {
           ctx.fillStyle = aliveColor;
           ctx.fillRect(c * cellSize, r * cellSize, cellSize, cellSize);
         }
@@ -268,17 +255,12 @@ export default function App(): JSX.Element {
       
       if (e.key === 'Shift') {
         e.preventDefault();
-        if (panelVisible) {
-          setPanelVisible(false);
-        } else {
-          setPanelVisible(true);
-          setIsMobile(false);
-          const mouseX = mousePos.current.x || window.innerWidth / 2;
-          const mouseY = mousePos.current.y || window.innerHeight / 2;
-          const newX = Math.max(10, Math.min(mouseX - 200, window.innerWidth - 440));
-          const newY = Math.max(10, mouseY - 50);
-          setPanelPos({ x: newX, y: newY });
-        }
+        setIsMobile(false);
+        const mouseX = mousePos.current.x || window.innerWidth / 2;
+        const mouseY = mousePos.current.y || window.innerHeight / 2;
+        const newX = Math.max(10, Math.min(mouseX - 200, window.innerWidth - 440));
+        const newY = Math.max(10, Math.min(mouseY - 50, window.innerHeight - 400));
+        setPanelPos({ x: newX, y: newY });
       }
     };
     
@@ -291,13 +273,16 @@ export default function App(): JSX.Element {
       window.removeEventListener('mouseup', handleMouseUp);
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [isMobile, panelPos, panelVisible, toggleRunning]);
+  }, [isMobile, panelPos, toggleRunning]);
 
   const handleRowsChange = (newRows: number) => {
     setRows(newRows);
     setGrid(g => {
       const newGrid = createEmptyGrid(newRows, cols);
-      for (let r = 0; r < Math.min(g.length, newRows); r++) newGrid[r].set(g[r]);
+      for (let r = 0; r < Math.min(g.length, newRows); r++) {
+        const copyLength = Math.min(g[r].length, cols);
+        newGrid[r].set(g[r].slice(0, copyLength));
+      }
       return newGrid;
     });
   };
@@ -354,24 +339,21 @@ export default function App(): JSX.Element {
         />
       </div>
 
-      {panelVisible && (
-        <div
-          ref={panelRef}
-          style={{
-            position: isMobile ? 'relative' : 'fixed',
-            top: isMobile ? undefined : panelPos.y,
-            left: isMobile ? undefined : panelPos.x,
-            marginTop: isMobile ? '10px' : undefined,
-            background: 'rgba(17,24,39,0.95)',
-            padding: '12px',
-            borderRadius: '10px',
-            maxWidth: '430px',
-            zIndex: 1000,
-            boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
-            opacity: (!isMobile && !initialPositionSet) ? 0 : 1,
-            transition: (!isMobile && !initialPositionSet) ? 'none' : 'opacity 0.2s ease'
-          }}
-        >
+      <div
+        ref={panelRef}
+        style={{
+          position: isMobile ? 'relative' : 'fixed',
+          top: isMobile ? undefined : panelPos.y,
+          left: isMobile ? undefined : panelPos.x,
+          marginTop: isMobile ? '10px' : undefined,
+          background: 'rgba(17,24,39,0.95)',
+          padding: '12px',
+          borderRadius: '10px',
+          maxWidth: '430px',
+          zIndex: 1000,
+          boxShadow: '0 4px 12px rgba(0,0,0,0.3)'
+        }}
+      >
         {/* Header with minimize button */}
         <div
         onMouseDown={handleHeaderMouseDown}
@@ -553,8 +535,7 @@ export default function App(): JSX.Element {
             )}
           </div>
         </div>
-        </div>
-      )}
+      </div>
     </div>
   );
 }
