@@ -1,4 +1,4 @@
-# Conway's Game of Life — React + TypeScript
+# Conway's Game of Life
 
 ### Quick Start
 
