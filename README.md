@@ -1,5 +1,7 @@
 # Conway's Game of Life
 
+Simple visual tool for running Conway's Game of Life and other types of cellular automota simulations. Conditions such as grid size and survive/birth counts can be adjusted for additional flexibility. 
+
 ### Quick Start
 
 1. `npm install`  
