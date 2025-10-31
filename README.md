@@ -1,4 +1,6 @@
-# Conway's Game of Life — React + TypeScript
+# Conway's Game of Life
+
+Simple visual tool for running Conway's Game of Life and other types of cellular automata simulations. Conditions such as grid size and survival/birth counts can be adjusted for additional flexibility. 
 
 ### Quick Start
 
