@@ -1,5 +1,17 @@
 # Conway's Game of Life
 
+  <div align="center">
+      <a href="https://jo56.github.io/conways-game-of-life" target="_blank">
+          <img src="assets/conways-preview.png" alt="conways preview">
+      </a>
+      <br>
+      <a href="https://jo56.github.io/conways-game-of-life" target="_blank">
+          <b>https://jo56.github.io/conways-game-of-life</b>
+      </a>
+  </div>
+
+<br>
+
 Simple visual tool for running Conway's Game of Life and other types of cellular automata simulations. Conditions such as grid size and survival/birth counts can be adjusted for additional flexibility. 
 
 ### Quick Start
